@@ -1,5 +1,5 @@
 # app.py — Streamlit × Wit.ai × cleaned_movies.csv
-import os, re, json, difflib, requests
+import io, os, re, json, difflib, requests
 import pandas as pd
 import streamlit as st
 from typing import Dict, Any, List, Tuple, Optional
@@ -23,28 +23,63 @@ def get_secret(k, default=""):
 
 WIT_SERVER_TOKEN = get_secret("WIT_SERVER_TOKEN", "PASTE_YOUR_WIT_SERVER_ACCESS_TOKEN_HERE")
 API_VERSION = "20240901"
-CSV_PATH = "cleaned_movies.csv"
+
+# You can override these via Streamlit Secrets or env vars on Cloud
+CSV_PATH = get_secret("CSV_PATH", "cleaned_movies.csv")    # local file path
+CSV_URL  = get_secret("CSV_URL", "").strip()               # optional http(s) URL to the CSV (or CSV.GZ)
 CONF_INTENT_MIN = 0.50
 MAX_RESULTS_DEFAULT = 10
+
 
 if not WIT_SERVER_TOKEN or "PASTE_" in WIT_SERVER_TOKEN:
     st.warning("Add your **WIT_SERVER_TOKEN** in Streamlit Secrets or as an env var.")
 
 # ---------- data ----------
-@st.cache_data(show_spinner=False)
-def load_df(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    for c in ["title","genres","director","cast","overview","description",
-              "vote_average","rating","vote_count","popularity","release_year","year"]:
-        if c in df.columns and df[c].dtype == "O":
-            df[c] = df[c].fillna("")
-    if "description" not in df.columns and "overview" in df.columns:
-        df["description"] = df["overview"].fillna("")
-    if "release_year" not in df.columns and "year" in df.columns:
-        df["release_year"] = df["year"]
-    return df
+@st.cache_data(show_spinner=True)
+def load_df(path: str = "", url: str = "") -> pd.DataFrame:
+    # Try local path first (csv or csv.gz)
+    if path and os.path.exists(path):
+        try:
+            return pd.read_csv(path)
+        except pd.errors.EmptyDataError:
+            # maybe it's gz-compressed with .csv extension
+            return pd.read_csv(path, compression="gzip")
 
-df = load_df(CSV_PATH)
+    # Try remote URL next
+    if url:
+        r = requests.get(url, timeout=60)
+        r.raise_for_status()
+        buf = io.BytesIO(r.content)
+        try:
+            return pd.read_csv(buf)
+        except pd.errors.EmptyDataError:
+            buf.seek(0)
+            return pd.read_csv(buf, compression="gzip")
+
+    # Nothing worked
+    raise FileNotFoundError(f"CSV not found. Tried path='{path}' and url='{url}'")
+
+
+# ---------- load dataset (with graceful fallback) ----------
+try:
+    df = load_df(CSV_PATH, CSV_URL)
+except Exception as e:
+    st.warning(
+        "I couldn't load your dataset.\n\n"
+        "• If you deployed from GitHub: make sure `cleaned_movies.csv` is committed in the repo (not Git LFS) "
+        "and is under ~100 MB. If it's big, upload `cleaned_movies.csv.gz` and set a CSV_URL secret pointing to it.\n"
+        "• Or upload the file below."
+    )
+    uploaded = st.file_uploader("Upload cleaned_movies.csv (or .csv.gz)", type=["csv", "gz"])
+    if not uploaded:
+        st.stop()
+    # Read uploaded file (supports .gz)
+    try:
+        df = pd.read_csv(uploaded)
+    except pd.errors.EmptyDataError:
+        uploaded.seek(0)
+        df = pd.read_csv(uploaded, compression="gzip")
+
 
 def col(*names): 
     for n in names:
