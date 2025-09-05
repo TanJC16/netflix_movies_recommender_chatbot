@@ -203,7 +203,6 @@ def route(text: str, data: Dict[str, Any], k=MAX_RESULTS_DEFAULT, conf_min=CONF_
                        year=f"{y1}-{y2}" if (y1 and y2 and y1!=y2) else (y1 or y2)), table)
 
     if intent.startswith("get_") and title:
-        # simple fact lookups
         from difflib import get_close_matches
         choices = df[COL_TITLE].astype(str).tolist() if COL_TITLE else []
         found = get_close_matches(title, choices, n=1, cutoff=0.6)
@@ -220,18 +219,25 @@ def route(text: str, data: Dict[str, Any], k=MAX_RESULTS_DEFAULT, conf_min=CONF_
         if intent == "get_rating_by_movie_title":
             val = row.get(COL_RATE, "not available"); return (f"Rating of {found[0]}: {val}", pd.DataFrame())
 
-    if intent == "get_movie_attributes" and attr := (ent(data,"movie_attribute:movie_attribute") or ent(data,"movie_attribute")):
+    # ---- FIXED: no walrus operator here ----
+    attr_val = ent(data, "movie_attribute:movie_attribute") or ent(data, "movie_attribute")
+    if intent == "get_movie_attributes" and attr_val:
         dd = df.copy()
-        if genre and COL_GENRE: dd = dd[s_contains(dd[COL_GENRE], genre)]
+        if genre and COL_GENRE:
+            dd = dd[s_contains(dd[COL_GENRE], genre)]
         if (y1 or y2) and COL_YEAR:
-            y1_ = y1 or 1800; y2_ = y2 or 2100
+            y1_ = y1 or 1800
+            y2_ = y2 or 2100
             years = pd.to_numeric(dd[COL_YEAR], errors="coerce").fillna(-1).astype(int)
             dd = dd[years.between(y1_, y2_)]
         if COL_DESC:
-            score = dd[COL_DESC].str.lower().str.count(re.escape(attr.lower()))
-            dd = dd.assign(_attr=score).sort_values(by=["_attr", COL_POP or COL_RATE or COL_VOTE], ascending=[False, False])
+            score = dd[COL_DESC].str.lower().str.count(re.escape(attr_val.lower()))
+            dd = dd.assign(_attr=score).sort_values(
+                by=["_attr"] + [c for c in [COL_POP, COL_RATE, COL_VOTE] if c],
+                ascending=[False, False, False, False]
+            )
         table = tidy_table(dd, k)
-        return (header(f"Here are {len(table)} movies with", year=(y1 or y2), genre=genre)[:-1] + f' “{attr}”.', table)
+        return (f'Here are {len(table)} movies with "{attr_val}".', table)
 
     return ("I couldn’t parse that. Try: “tell me action movies”, “movies directed by Quentin Tarantino”, or “top 5 rated movies in 2018”.", pd.DataFrame())
 
