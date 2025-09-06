@@ -1,118 +1,27 @@
-# app.py — Streamlit × Wit.ai × cleaned_movies.csv
-import io, os, re, json, difflib, requests
-import pandas as pd
+# app.py — Streamlit × Wit.ai × endpoints (list-movie, movie-info, movie-with-attribute)
+import os, re, json, urllib.parse, requests
 import streamlit as st
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Optional, Tuple
 
-# ---------- page setup (hide sidebar) ----------
-st.set_page_config(page_title="Wit.ai Netflix Recommender", page_icon="🎬",
-                   layout="wide", initial_sidebar_state="collapsed")
-st.markdown("""
-<style>
-/* hide the entire left sidebar */
-section[data-testid="stSidebar"] { display: none !important; }
-/* optional: hide the hamburger that toggles the sidebar */
-// button[kind="header"] { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
+# ---------- Config ----------
+WIT_SERVER_TOKEN = os.getenv("WIT_SERVER_TOKEN", "PASTE_YOUR_WIT_SERVER_ACCESS_TOKEN_HERE")
+API_VERSION      = os.getenv("WIT_API_VERSION", "20240901")
 
-# ---------- config ----------
-def get_secret(k, default=""):
-    try: return st.secrets[k]
-    except Exception: return os.getenv(k, default)
+ENDPOINT_DATABASE_PATH = os.getenv("MOVIE_API_BASE", "http://localhost:9001")
+ENDPOINT_GET_MOVIE = "/list-movie"
+ENDPOINT_GET_MOVIE_INFO = "/movie-info"
+ENDPOINT_GET_MOVIE_WITH_ATTRIBUTES = "/movie-with-attribute"
+DEFAULT_FALLBACK = 'Tell me what you’d like to watch (e.g., "action movies from 2018").'
 
-WIT_SERVER_TOKEN = get_secret("WIT_SERVER_TOKEN", "PASTE_YOUR_WIT_SERVER_ACCESS_TOKEN_HERE")
-API_VERSION = "20240901"
-
-# You can override these via Streamlit Secrets or env vars on Cloud
-CSV_PATH = get_secret("CSV_PATH", "cleaned_movies.csv")    # local file path
-CSV_URL  = get_secret("CSV_URL", "").strip()               # optional http(s) URL to the CSV (or CSV.GZ)
-CONF_INTENT_MIN = 0.50
-MAX_RESULTS_DEFAULT = 10
-
-
-if not WIT_SERVER_TOKEN or "PASTE_" in WIT_SERVER_TOKEN:
-    st.warning("Add your **WIT_SERVER_TOKEN** in Streamlit Secrets or as an env var.")
-
-# ---------- data ----------
-@st.cache_data(show_spinner=True)
-def load_df(path: str = "", url: str = "") -> pd.DataFrame:
-    # Try local path first (csv or csv.gz)
-    if path and os.path.exists(path):
-        try:
-            return pd.read_csv(path)
-        except pd.errors.EmptyDataError:
-            # maybe it's gz-compressed with .csv extension
-            return pd.read_csv(path, compression="gzip")
-
-    # Try remote URL next
-    if url:
-        r = requests.get(url, timeout=60)
-        r.raise_for_status()
-        buf = io.BytesIO(r.content)
-        try:
-            return pd.read_csv(buf)
-        except pd.errors.EmptyDataError:
-            buf.seek(0)
-            return pd.read_csv(buf, compression="gzip")
-
-    # Nothing worked
-    raise FileNotFoundError(f"CSV not found. Tried path='{path}' and url='{url}'")
-
-
-# ---------- load dataset (with graceful fallback) ----------
-try:
-    df = load_df(CSV_PATH, CSV_URL)
-except Exception as e:
-    st.warning(
-        "I couldn't load your dataset.\n\n"
-        "• If you deployed from GitHub: make sure `cleaned_movies.csv` is committed in the repo (not Git LFS) "
-        "and is under ~100 MB. If it's big, upload `cleaned_movies.csv.gz` and set a CSV_URL secret pointing to it.\n"
-        "• Or upload the file below."
-    )
-    uploaded = st.file_uploader("Upload cleaned_movies.csv (or .csv.gz)", type=["csv", "gz"])
-    if not uploaded:
-        st.stop()
-    # Read uploaded file (supports .gz)
-    try:
-        df = pd.read_csv(uploaded)
-    except pd.errors.EmptyDataError:
-        uploaded.seek(0)
-        df = pd.read_csv(uploaded, compression="gzip")
-
-
-def col(*names): 
-    for n in names:
-        if n in df.columns: return n
-    return None
-
-COL_TITLE = col("title")
-COL_GENRE = col("genres")
-COL_DIR   = col("director")
-COL_CAST  = col("cast")
-COL_YEAR  = col("release_year","year")
-COL_DESC  = col("description","overview")
-COL_RATE  = col("vote_average","rating")
-COL_VOTE  = col("vote_count")
-COL_POP   = col("popularity")
-
-def s_contains(series: pd.Series, needle: str) -> pd.Series:
-    return series.str.lower().str.contains(re.escape(needle.lower()), na=False)
-
-def rank_df(dd: pd.DataFrame) -> pd.DataFrame:
-    order = [c for c in [COL_RATE, COL_VOTE, COL_POP] if c]
-    return dd.sort_values(by=order, ascending=[False]*len(order)) if order else dd
-
-def tidy_table(dd: pd.DataFrame, k: int) -> pd.DataFrame:
-    # choose user-friendly columns and drop any id-like column
-    cols = [c for c in [COL_TITLE, COL_YEAR, COL_GENRE, COL_RATE] if c]
-    table = dd[cols].head(k).copy()
-    # hide index and any column literally named 'id'
-    if "id" in table.columns: table = table.drop(columns=["id"])
-    return table.reset_index(drop=True)
-
-# ---------- wit ----------
 HEAD = {"Authorization": f"Bearer {WIT_SERVER_TOKEN}"}
+
+# ---------- UI ----------
+st.set_page_config(page_title="Wit.ai Movie Bot", page_icon="🎬", layout="wide")
+st.title("🎬 Wit.ai Movie Bot (Rasa-style actions)")
+if not WIT_SERVER_TOKEN or "PASTE_" in WIT_SERVER_TOKEN:
+    st.warning("Set WIT_SERVER_TOKEN env var.")
+
+# ---------- Wit helpers ----------
 def wit_message(text: str) -> Dict[str, Any]:
     r = requests.get("https://api.wit.ai/message",
                      params={"q": text, "v": API_VERSION},
@@ -120,188 +29,268 @@ def wit_message(text: str) -> Dict[str, Any]:
     r.raise_for_status()
     return r.json()
 
-def top_intent(d: Dict[str, Any]): 
-    arr = d.get("intents") or []
-    return (arr[0].get("name"), float(arr[0].get("confidence") or 0.0)) if arr else (None, 0.0)
-
-def ent(d: Dict[str, Any], key: str) -> Optional[str]:
-    arr = (d.get("entities") or {}).get(key, []) or []
+def ent(data: Dict[str, Any], key: str) -> Optional[str]:
+    arr = (data.get("entities") or {}).get(key, [])
     if not arr: return None
     v = arr[0].get("value")
-    return v["value"] if isinstance(v, dict) and "value" in v else (str(v) if v is not None else None)
+    if isinstance(v, dict) and "value" in v: v = v["value"]
+    return str(v) if v is not None else None
 
-def years_from_datetime(d: Dict[str, Any]) -> Tuple[Optional[int], Optional[int]]:
-    ents = d.get("entities") or {}
-    dt = ents.get("wit$datetime:datetime") or ents.get("wit$datetime") or []
-    if not dt: return None, None
-    v = dt[0].get("value")
-    if isinstance(v, dict) and "from" in v and "to" in v:
-        try: return int(v["from"]["value"][:4]), int(v["to"]["value"][:4])
-        except: return None, None
-    if isinstance(v, str) and re.match(r"^\d{4}", v): 
-        y = int(v[:4]); return y, y
+def first_year(text: str) -> Optional[str]:
+    m = re.search(r"\b(19|20)\d{2}\b", text)
+    return m.group(0) if m else None
+
+def extract_years(data: Dict[str, Any], text: str) -> Tuple[Optional[str], Optional[str]]:
+    """Prefer custom year:year; else regex; ignore wit$datetime quirks."""
+    y = None
+    arr = (data.get("entities") or {}).get("year:year") or (data.get("entities") or {}).get("year") or []
+    if arr:
+        v = str(arr[0].get("value") or "")
+        if re.fullmatch(r"(?:19|20)\d{2}", v): y = v
+    if not y:
+        y = first_year(text)
+    return (y, y) if y else (None, None)
+
+def is_pure_year(text: str) -> Optional[str]:
+    s = text.strip()
+    return s if re.fullmatch(r"(?:19|20)\d{2}", s) else None
+
+def ent_any(data: Dict[str, Any], *names) -> Optional[str]:
+    """Return first entity value where key equals any name OR base part before ':' equals any name."""
+    ents = (data.get("entities") or {})
+    keys = list(ents.keys())
+    for k in keys:
+        base = k.split(":")[0]
+        if k in names or base in names:
+            arr = ents.get(k) or []
+            if arr:
+                v = arr[0].get("value")
+                if isinstance(v, dict): v = v.get("value")
+                if v is not None:
+                    return str(v)
+    return None
+
+def extract_years_any(data: Dict[str, Any], text: str) -> Tuple[Optional[str], Optional[str]]:
+    # 1) entity first
+    v = ent_any(data, "year")
+    if v and re.fullmatch(r"(?:19|20)\d{2}", str(v)): 
+        return str(v), str(v)
+    # 2) raw text fallback (handles pure "2021")
+    m = re.search(r"\b(19|20)\d{2}\b", text)
+    if m: 
+        y = m.group(0)
+        return y, y
     return None, None
 
-def year_from_text(text: str) -> Optional[int]:
-    m = re.search(r"\b(19\d{2}|20\d{2})\b", text)
-    return int(m.group(1)) if m else None
-
-def topn_from_text(text: str) -> Optional[int]:
+def topn_from_text(text: str) -> Optional[str]:
     m = re.search(r"\btop\s+(\d+)\b", text, re.I)
-    return int(m.group(1)) if m else None
+    return m.group(1) if m else None
 
-# ---------- router: returns (header_text, table_df) ----------
-def route(text: str, data: Dict[str, Any], k=MAX_RESULTS_DEFAULT, conf_min=CONF_INTENT_MIN):
-    intent, conf = top_intent(data)
+# ---------- Endpoint callers ----------
+def call_list_movie(params: Dict[str, str]):
+    url = ENDPOINT_DATABASE_PATH + ENDPOINT_GET_MOVIE
+    if params:
+        qs = "&".join(f"{k}={urllib.parse.quote(v)}" for k, v in params.items() if v)
+        url = f"{url}?{qs}"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    return r.json()
 
-    # entities
-    director = ent(data, "director:director") or ent(data, "director")
-    actor    = ent(data, "actor:actor") or ent(data, "actor")
-    genre    = ent(data, "genre:genre") or ent(data, "genre")
-    title    = ent(data, "movie_title:movie_title") or ent(data, "movie_title")
-    attr     = ent(data, "movie_attribute:movie_attribute") or ent(data, "movie_attribute")
-    y1, y2   = years_from_datetime(data)
-    year_guess = year_from_text(text)
-    topn_guess = topn_from_text(text)
+def call_movie_info(title: str):
+    url = ENDPOINT_DATABASE_PATH + ENDPOINT_GET_MOVIE_INFO + "?movie_title=" + urllib.parse.quote(title)
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    return r.json()
 
-    # friendly headers helper
-    def header(prefix: str, **kw):
-        bits = [prefix]
-        if kw.get("year"):  bits.append(f"in {kw['year']}")
-        if kw.get("genre"): bits.append(f"for {kw['genre']}")
-        if kw.get("director"): bits.append(f"by {kw['director']}")
-        if kw.get("actor"): bits.append(f"with {kw['actor']}")
-        return " ".join(bits) + "."
+def call_movie_with_attribute(params: Dict[str, str]):
+    url = ENDPOINT_DATABASE_PATH + ENDPOINT_GET_MOVIE_WITH_ATTRIBUTES
+    if params:
+        qs = "&".join(f"{k}={urllib.parse.quote(v)}" for k, v in params.items() if v)
+        url = f"{url}?{qs}"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    return r.json()
 
-    if intent is None or conf < conf_min:
-        return ("Tell me what you’d like to watch (e.g., “action movies from 2018”).", pd.DataFrame())
+# ---------- Formatters ----------
+def format_list(response_json, prefix="Recommended movies are:"):
+    if not response_json:
+        return "No movies found"
 
-    # small-talk
-    if intent in {"greet","goodbye","affirm","deny","mood_great","mood_unhappy","bot_challenge"}:
-        msg = {
-            "greet":"Hello! What are you in the mood to watch?",
-            "goodbye":"Bye! Happy watching.",
-            "affirm":"Great! Tell me more.",
-            "deny":"No worries—what would you like instead?",
-            "mood_great":"Awesome 😄 Want a feel-good pick?",
-            "mood_unhappy":"Sorry to hear that. Want something uplifting?",
-            "bot_challenge":"I’m an assistant powered by Wit.ai + Streamlit."
-        }[intent]
-        return (msg, pd.DataFrame())
+    def extract_title(item):
+        if isinstance(item, (list, tuple)) and item:
+            return str(item[0])
+        if isinstance(item, dict):
+            for k in ["title", "movie_title", "name"]:
+                if k in item and item[k]:
+                    return str(item[k])
+            for k, v in item.items():
+                if "title" in str(k).lower():
+                    return str(v)
+            return None
+        if isinstance(item, str):
+            return item
+        return None
 
-    # queries
-    if intent == "movie_match_year":
-        yr = y1 or y2 or year_guess
-        if yr and COL_YEAR:
-            dd = df[df[COL_YEAR].astype(str).str.contains(str(yr), na=False)]
-            dd = rank_df(dd)
-            table = tidy_table(dd, topn_guess or k)
-            return (f"Here are {len(table)} movies released in {yr}.", table)
+    lines = [prefix]
+    for i, item in enumerate(response_json, 1):
+        t = extract_title(item)
+        if t:
+            lines.append(f"{i}. {t}")
+    return "\n".join(lines) if len(lines) > 1 else "No movies found"
 
-    if intent == "movie_match_genre" and genre:
-        dd = rank_df(df[s_contains(df[COL_GENRE], genre)]) if COL_GENRE else df.iloc[0:0]
-        table = tidy_table(dd, k)
-        return (header(f"Here are {len(table)} {genre} movies"), table)
 
+def pretty_title_info(response_json, want: str):
+    if not response_json:
+        return "MovieTitleNotFound"
+    out = []
+    for title, payload in response_json.items():
+        out.append(f"Movie title: {title}")
+        val = payload.get(want)
+        if want == "year_start":
+            out.append(f"Year: {val}" if val else "Year not found")
+        elif want in ("directors", "actors", "genres"):
+            if isinstance(val, list) and val:
+                label = "Director(s)" if want == "directors" else ("Actor(s)" if want == "actors" else "Genre(s)")
+                out.append(f"{label}:")
+                out.extend([f"- {x}" for x in val])
+            else:
+                out.append(f"{'Directors' if want=='directors' else 'Actors' if want=='actors' else 'Genres'} not found")
+        elif want == "rating":
+            out.append(f"Rating: {val}" if val is not None else "Rating not found")
+    return "\n".join(out)
+
+# ---------- Router ----------
+def route(text: str, data: Dict[str, Any]) -> str:
+    # ---------- INTENT (may be empty/low) ----------
+    intent = (data.get("intents") or [{}])[0].get("name")
+    conf   = float((data.get("intents") or [{}])[0].get("confidence") or 0.0)
+
+    # ---------- ENTITIES (work even if no intent) ----------
+    director = ent_any(data, "director")
+    actor    = ent_any(data, "actor")
+    genre    = ent_any(data, "genre")
+    title    = ent_any(data, "movie_title")
+    attr_val = ent_any(data, "movie_attribute")
+    y1, y2   = extract_years_any(data, text)
+
+    # NEW: detect a typed year like "2020" up-front
+    ytxt = is_pure_year(text)
+
+    topn = topn_from_text(text)
+
+    # ---------- HARD OVERRIDE: pure-year BEFORE any fallback ----------
+    if ytxt and not any([director, actor, genre, title, attr_val]):
+        p = {"year": ytxt, "year_start": ytxt, "year_end": ytxt, "release_year": ytxt}
+        res = call_list_movie(p)
+        return format_list(res)
+
+    # ---------- NO/LOW INTENT + NO ENTITIES? show default ----------
+    # Count ytxt as an "entity" too, so we don't fallback on "2020"
+    have_entities = any([director, actor, genre, title, attr_val, y1, y2, topn, ytxt])
+    if (not intent or conf < 0.5) and not have_entities:
+        return DEFAULT_FALLBACK
+
+    # ---------- NO/LOW INTENT? Decide purely from entities ----------
+    if not intent or conf < 0.5:
+        low = text.lower()
+        if title and "director" in low: intent = "get_director_by_movie_title"
+        elif title and ("actor" in low or "cast" in low): intent = "get_actor_by_movie_title"
+        elif title and "year" in low: intent = "get_year_by_movie_title"
+        elif title and "genre" in low: intent = "get_genre_by_movie_title"
+        elif title and "rating" in low: intent = "get_rating_by_movie_title"
+        else:
+            if (y1 or ytxt) and not any([director, actor, genre, title, attr_val]):
+                y = y1 or ytxt
+                p = {"year": y, "year_start": y, "year_end": y, "release_year": y}
+                res = call_list_movie(p); return format_list(res)
+            if director and not any([actor, genre, y1, title, attr_val]):
+                res = call_list_movie({"director": director}); return format_list(res)
+            if actor and not any([director, genre, y1, title, attr_val]):
+                res = call_list_movie({"actor": actor}); return format_list(res)
+            if genre and not any([director, actor, y1, title, attr_val]):
+                res = call_list_movie({"genre": genre}); return format_list(res)
+            if any([director, actor, genre, y1, ytxt]):
+                y = y1 or ytxt
+                p = {}
+                if director: p["director"] = director
+                if actor:    p["actor"]    = actor
+                if genre:    p["genre"]    = genre
+                if y:        p["year"] = p["year_start"] = y
+                res = call_list_movie(p); return format_list(res)
+
+    # ---------- Normal intent handlers (unchanged) ----------
     if intent == "movie_match_director" and director:
-        dd = rank_df(df[s_contains(df[COL_DIR], director)]) if COL_DIR else df.iloc[0:0]
-        table = tidy_table(dd, k)
-        return (header(f"Here are {len(table)} movies", director=director), table)
-
+        res = call_list_movie({"director": director}); return format_list(res)
     if intent == "movie_match_actor" and actor:
-        dd = rank_df(df[s_contains(df[COL_CAST], actor)]) if COL_CAST else df.iloc[0:0]
-        table = tidy_table(dd, k)
-        return (header(f"Here are {len(table)} movies", actor=actor), table)
-
+        res = call_list_movie({"actor": actor}); return format_list(res)
+    if intent == "movie_match_genre" and genre:
+        res = call_list_movie({"genre": genre}); return format_list(res)
+    if intent == "movie_match_year" and (y1 or y2 or ytxt):
+        y = y1 or ytxt
+        p = {}
+        if y:  p["year"] = p["year_start"] = y
+        if y2: p["year_end"] = y2
+        res = call_list_movie(p); return format_list(res)
     if intent == "movie_match_rating":
-        yr = y1 or y2 or year_guess
-        dd = df
-        if yr and COL_YEAR:
-            dd = dd[dd[COL_YEAR].astype(str).str.contains(str(yr), na=False)]
-        dd = rank_df(dd)
-        n = topn_guess or 10
-        table = tidy_table(dd, n)
-        return (f"Top {len(table)} rated movies" + (f" in {yr}" if yr else "") + ".", table)
-
+        p = {}
+        if topn:     p["rating"]   = topn
+        if genre:    p["genre"]    = genre
+        if director: p["director"] = director
+        if actor:    p["actor"]    = actor
+        if (y1 or ytxt):
+            y = y1 or ytxt
+            p["year"] = p["year_start"] = y
+        res = call_list_movie(p); return format_list(res)
     if intent == "movie_match_several_criteria":
-        m = pd.Series([True]*len(df))
-        if genre and COL_GENRE:  m &= s_contains(df[COL_GENRE], genre)
-        if actor and COL_CAST:   m &= s_contains(df[COL_CAST], actor)
-        if director and COL_DIR: m &= s_contains(df[COL_DIR], director)
-        if (y1 or y2) and COL_YEAR:
-            y1_ = y1 or 1800; y2_ = y2 or 2100
-            years = pd.to_numeric(df[COL_YEAR], errors="coerce").fillna(-1).astype(int)
-            m &= years.between(y1_, y2_)
-        dd = rank_df(df[m])
-        table = tidy_table(dd, k)
-        return (header(f"Here are {len(table)} movies", genre=genre, actor=actor, director=director,
-                       year=f"{y1}-{y2}" if (y1 and y2 and y1!=y2) else (y1 or y2)), table)
+        p = {}
+        if director: p["director"] = director
+        if actor:    p["actor"]    = actor
+        if genre:    p["genre"]    = genre
+        if (y1 or ytxt):
+            y = y1 or ytxt
+            p["year"] = p["year_start"] = y
+        res = call_list_movie(p); return format_list(res)
 
-    if intent.startswith("get_") and title:
-        from difflib import get_close_matches
-        choices = df[COL_TITLE].astype(str).tolist() if COL_TITLE else []
-        found = get_close_matches(title, choices, n=1, cutoff=0.6)
-        if not found: return (f"Couldn't find a title like '{title}'.", pd.DataFrame())
-        row = df[df[COL_TITLE].str.lower()==found[0].lower()].iloc[0]
-        if intent == "get_director_by_movie_title":
-            val = row.get(COL_DIR, "not available"); return (f"Director(s) of {found[0]}: {val}", pd.DataFrame())
-        if intent == "get_actor_by_movie_title":
-            val = row.get(COL_CAST, "not available"); return (f"Actors in {found[0]}: {val}", pd.DataFrame())
-        if intent == "get_year_by_movie_title":
-            val = row.get(COL_YEAR, "not available"); return (f"Year of {found[0]}: {val}", pd.DataFrame())
-        if intent == "get_genre_by_movie_title":
-            val = row.get(COL_GENRE, "not available"); return (f"Genre(s) of {found[0]}: {val}", pd.DataFrame())
-        if intent == "get_rating_by_movie_title":
-            val = row.get(COL_RATE, "not available"); return (f"Rating of {found[0]}: {val}", pd.DataFrame())
-
-    # ---- FIXED: no walrus operator here ----
-    attr_val = ent(data, "movie_attribute:movie_attribute") or ent(data, "movie_attribute")
+    if intent == "get_director_by_movie_title" and title:
+        info = call_movie_info(title); return pretty_title_info(info, want="directors")
+    if intent == "get_actor_by_movie_title" and title:
+        info = call_movie_info(title); return pretty_title_info(info, want="actors")
+    if intent == "get_year_by_movie_title" and title:
+        info = call_movie_info(title); return pretty_title_info(info, want="year_start")
+    if intent == "get_genre_by_movie_title" and title:
+        info = call_movie_info(title); return pretty_title_info(info, want="genres")
+    if intent == "get_rating_by_movie_title" and title:
+        info = call_movie_info(title); return pretty_title_info(info, want="rating")
     if intent == "get_movie_attributes" and attr_val:
-        dd = df.copy()
-        if genre and COL_GENRE:
-            dd = dd[s_contains(dd[COL_GENRE], genre)]
-        if (y1 or y2) and COL_YEAR:
-            y1_ = y1 or 1800
-            y2_ = y2 or 2100
-            years = pd.to_numeric(dd[COL_YEAR], errors="coerce").fillna(-1).astype(int)
-            dd = dd[years.between(y1_, y2_)]
-        if COL_DESC:
-            score = dd[COL_DESC].str.lower().str.count(re.escape(attr_val.lower()))
-            dd = dd.assign(_attr=score).sort_values(
-                by=["_attr"] + [c for c in [COL_POP, COL_RATE, COL_VOTE] if c],
-                ascending=[False, False, False, False]
-            )
-        table = tidy_table(dd, k)
-        return (f'Here are {len(table)} movies with "{attr_val}".', table)
+        p = {"movie_attribute": attr_val}
+        if (y1 or ytxt):
+            y = y1 or ytxt
+            p["year"] = p["year_start"] = y
+        res = call_movie_with_attribute(p); return format_list(res)
 
-    return ("I couldn’t parse that. Try: “tell me action movies”, “movies directed by Quentin Tarantino”, or “top 5 rated movies in 2018”.", pd.DataFrame())
+    # ---------- Last resort ----------
+    if (y1 or ytxt):
+        y = y1 or ytxt
+        p = {"year": y, "year_start": y, "year_end": y2 or y, "release_year": y}
+        res = call_list_movie(p); return format_list(res)
 
-# ---------- UI ----------
-st.title("🎬 Netflix Recommender")
-st.caption("Ask anything: “movies released in 2025”, “comedy movies with Tom Hanks”, “top 5 rated movies in 2019”.")
+    return DEFAULT_FALLBACK
 
-# chat history (optional)
-st.session_state.setdefault("history", [])
-
-for m in st.session_state["history"]:
+# ---------- Chat ----------
+for m in st.session_state.get("history", []):
     with st.chat_message(m["role"]):
-        st.markdown(m["content"])
-        if "table" in m and not m["table"].empty:
-            st.dataframe(m["table"], use_container_width=True)
+        st.markdown(m["text"])
 
-text = st.chat_input("What are you in the mood for?")
-if text:
-    st.session_state["history"].append({"role":"user","content":text})
-    with st.chat_message("user"): st.markdown(text)
+prompt = st.chat_input("Ask me about movies…")
+if prompt:
+    st.session_state.setdefault("history", []).append({"role":"user","text":prompt})
+    with st.chat_message("user"): st.markdown(prompt)
 
     try:
-        data = wit_message(text)
-        msg, table = route(text, data)
+        data = wit_message(prompt)
+        answer = route(prompt, data)
     except Exception as e:
-        msg, table = (f"Error: {e}", pd.DataFrame())
+        answer = f"Error: {e}"
 
-    st.session_state["history"].append({"role":"assistant","content":msg,"table":table})
-    with st.chat_message("assistant"):
-        st.markdown(msg)
-        if not table.empty:
-            st.dataframe(table, use_container_width=True)
+    st.session_state["history"].append({"role":"assistant","text":answer})
+    with st.chat_message("assistant"): st.markdown(answer)
