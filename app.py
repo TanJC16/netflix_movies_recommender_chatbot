@@ -192,6 +192,43 @@ def call_movie_with_attribute(params: Dict[str, str]) -> pd.DataFrame:
             df = df[s.notna()]
     return df
 
+def _ents_for_base(data: Dict[str, Any], base_key: str):
+    out = []
+    ents = (data.get("entities") or {})
+    for k, arr in ents.items():
+        if k.split(":")[0] != base_key: 
+            continue
+        for e in (arr or []):
+            v = e.get("value")
+            if isinstance(v, dict): v = v.get("value")
+            if v:
+                out.append((int(e.get("start", -1)), int(e.get("end", -1)), str(v)))
+    return out
+
+def stitch_name_from_entities(data: Dict[str, Any], base_key: str, text: str) -> Optional[str]:
+    pieces = _ents_for_base(data, base_key)
+    if not pieces:
+        return None
+    pieces.sort(key=lambda t: (t[0] if t[0] is not None else 10**9))
+    joined = " ".join(p[2] for p in pieces).strip()
+    s = text.strip()
+    if joined.replace(" ", "").lower() in s.replace(" ", "").lower():
+        try:
+            i = s.lower().find(pieces[0][2].lower())
+            j = s.lower().rfind(pieces[-1][2].lower())
+            if i != -1 and j != -1:
+                return s[i:j+len(pieces[-1][2])].strip()
+        except Exception:
+            pass
+    return joined
+
+def guess_person_name(text: str) -> Optional[str]:
+    s = text.strip()
+    # 2–4 words, letters/space/basic punctuation
+    if 1 < len(s.split()) <= 4 and re.fullmatch(r"[A-Za-z .'\-]+", s):
+        return s
+    return None
+
 # =========================
 # Display helpers
 # =========================
@@ -275,8 +312,8 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
     intent = (data.get("intents") or [{}])[0].get("name")
     conf   = float((data.get("intents") or [{}])[0].get("confidence") or 0.0)
 
-    director = ent_any(data, "director")
-    actor    = ent_any(data, "actor")
+    director = stitch_name_from_entities(data, "director", text) or ent_any(data, "director")
+    actor    = stitch_name_from_entities(data, "actor", text)    or ent_any(data, "actor")
     genre    = ent_any(data, "genre")
     title    = ent_any(data, "movie_title")
     attr_val = ent_any(data, "movie_attribute")
@@ -284,6 +321,10 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
     ytxt     = is_pure_year(text)
     topn     = topn_from_text(text)
     limit    = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
+    name_guess = guess_person_name(text)
+    if name_guess and not any([director, actor, genre, title, attr_val, y1, y2, ytxt]):
+        # Prefer actor for plain name inputs like "Tika Sumpter"
+        actor = name_guess
 
     if ytxt and not any([director, actor, genre, title, attr_val]):
         p = {"year": ytxt, "year_start": ytxt, "year_end": ytxt, "release_year": ytxt}
