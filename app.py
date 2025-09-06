@@ -1,4 +1,4 @@
-# app.py — Streamlit × Wit.ai × CSV-only (list-movie, movie-info, movie-with-attribute)
+# app.py — Streamlit × Wit.ai × CSV-only
 
 import os, re, json, urllib.parse, requests, ast
 import pandas as pd
@@ -14,15 +14,18 @@ def get_secret(k: str, default: str = "") -> str:
     except Exception:
         return os.getenv(k, default)
 
+def _as_int(x, default: int) -> int:
+    try:
+        return int(str(x))
+    except Exception:
+        return default
+
 WIT_SERVER_TOKEN = get_secret("WIT_SERVER_TOKEN", "")
 API_VERSION      = get_secret("WIT_API_VERSION", "20240901")
-
-# CSV path can be overridden via secrets if needed
 CSV_PATH         = get_secret("CSV_PATH", "cleaned_movies.csv")
+RESULTS_LIMIT    = _as_int(get_secret("RESULTS_LIMIT", "20"), 20)
 
 DEFAULT_FALLBACK = 'Tell me what you’d like to watch (e.g., "action movies from 2018").'
-
-# Only add Authorization header if we actually have a token
 HEAD = {"Authorization": f"Bearer {WIT_SERVER_TOKEN}"} if WIT_SERVER_TOKEN else {}
 
 # =========================
@@ -33,28 +36,13 @@ st.title("🎬 Wit.ai Movie Bot (CSV-only)")
 
 if not WIT_SERVER_TOKEN:
     st.warning("No Wit.ai token found in Streamlit secrets (WIT_SERVER_TOKEN). "
-               "Pure year/regex routing will still work, but entity extraction from Wit is disabled.")
-
-# Small debug panel
-with st.expander("🔧 Debug"):
-    st.write({
-        "CSV_PATH": CSV_PATH,
-        "WIT_API_VERSION": API_VERSION,
-        "WIT_TOKEN_SET": bool(WIT_SERVER_TOKEN)
-    })
-    try:
-        df_preview = pd.read_csv(CSV_PATH, nrows=3)
-        st.write({"csv_loaded_rows_preview": len(df_preview)})
-        st.dataframe(df_preview)
-    except Exception as e:
-        st.write(f"CSV load error: {e}")
+               "Entity extraction will be limited; year-only still works.")
 
 # =========================
 # Wit helpers
 # =========================
 def wit_message(text: str) -> Dict[str, Any]:
-    """Query Wit.ai; if token is missing, return an empty payload so routing
-    can still operate using regex/year parsing."""
+    """Query Wit.ai; if token missing, return minimal payload so routing via regex still works."""
     if not WIT_SERVER_TOKEN:
         return {"text": text, "intents": [], "entities": {}}
     r = requests.get(
@@ -66,37 +54,7 @@ def wit_message(text: str) -> Dict[str, Any]:
     r.raise_for_status()
     return r.json()
 
-def ent(data: Dict[str, Any], key: str) -> Optional[str]:
-    arr = (data.get("entities") or {}).get(key, [])
-    if not arr:
-        return None
-    v = arr[0].get("value")
-    if isinstance(v, dict) and "value" in v:
-        v = v["value"]
-    return str(v) if v is not None else None
-
-def first_year(text: str) -> Optional[str]:
-    m = re.search(r"\b(19|20)\d{2}\b", text)
-    return m.group(0) if m else None
-
-def extract_years(data: Dict[str, Any], text: str) -> Tuple[Optional[str], Optional[str]]:
-    """Prefer custom year:year; else regex; ignore wit$datetime quirks."""
-    y = None
-    arr = (data.get("entities") or {}).get("year:year") or (data.get("entities") or {}).get("year") or []
-    if arr:
-        v = str(arr[0].get("value") or "")
-        if re.fullmatch(r"(?:19|20)\d{2}", v):
-            y = v
-    if not y:
-        y = first_year(text)
-    return (y, y) if y else (None, None)
-
-def is_pure_year(text: str) -> Optional[str]:
-    s = text.strip()
-    return s if re.fullmatch(r"(?:19|20)\d{2}", s) else None
-
 def ent_any(data: Dict[str, Any], *names) -> Optional[str]:
-    """Return first entity value where key equals any name OR base part before ':' equals any name."""
     ents = (data.get("entities") or {})
     for k in list(ents.keys()):
         base = k.split(":")[0]
@@ -110,17 +68,20 @@ def ent_any(data: Dict[str, Any], *names) -> Optional[str]:
                     return str(v)
     return None
 
+def first_year(text: str) -> Optional[str]:
+    m = re.search(r"\b(19|20)\d{2}\b", text)
+    return m.group(0) if m else None
+
 def extract_years_any(data: Dict[str, Any], text: str) -> Tuple[Optional[str], Optional[str]]:
-    # 1) entity first
     v = ent_any(data, "year")
     if v and re.fullmatch(r"(?:19|20)\d{2}", str(v)):
         return str(v), str(v)
-    # 2) raw text fallback (handles pure "2021")
-    m = re.search(r"\b(19|20)\d{2}\b", text)
-    if m:
-        y = m.group(0)
-        return y, y
-    return None, None
+    y = first_year(text)
+    return (y, y) if y else (None, None)
+
+def is_pure_year(text: str) -> Optional[str]:
+    s = text.strip()
+    return s if re.fullmatch(r"(?:19|20)\d{2}", s) else None
 
 def topn_from_text(text: str) -> Optional[str]:
     m = re.search(r"\btop\s+(\d+)\b", text, re.I)
@@ -153,7 +114,6 @@ def _pick_year_col(df: pd.DataFrame):
 
 def _load_df():
     df = pd.read_csv(CSV_PATH)
-    # normalize list-like columns if present
     for c in ["genres", "cast", "director"]:
         if c in df.columns:
             df[c] = df[c].apply(_to_listish)
@@ -199,10 +159,9 @@ def call_list_movie(params: Dict[str, str]):
             rcol = next((c for c in ["rating", "vote_average", "imdb_score"] if c in df.columns), None)
             df = (df.sort_values(rcol, ascending=False) if rcol else df).head(n)
 
-    # Output: list of titles
+    # Output list of titles
     if "title" in df.columns:
         return df["title"].astype(str).tolist()
-    # fallback to first column if no title col
     return df.iloc[:, 0].astype(str).tolist()
 
 def call_movie_info(title: str):
@@ -225,11 +184,6 @@ def call_movie_info(title: str):
     }
 
 def call_movie_with_attribute(params: Dict[str, str]):
-    """
-    Minimal CSV version:
-    - If 'movie_attribute' matches an existing column, return titles where that column is non-empty.
-    - Also respects optional year filter.
-    """
     df = _load_df()
     ycol = _pick_year_col(df)
     y_start = params.get("year") or params.get("year_start") or params.get("release_year")
@@ -246,17 +200,20 @@ def call_movie_with_attribute(params: Dict[str, str]):
             df = df[s.fillna("").astype(str).str.strip() != ""]
         else:
             df = df[s.notna()]
-    # return titles
+
     if "title" in df.columns:
         return df["title"].astype(str).tolist()
     return df.iloc[:, 0].astype(str).tolist()
 
 # =========================
-# Formatters (kept above Router for linters)
+# Formatters
 # =========================
-def format_list(response_json, prefix="Recommended movies are:"):
+def format_list(response_json, prefix="Recommended movies are:", limit: Optional[int] = None):
     if not response_json:
         return "No movies found"
+
+    # default limit
+    L = RESULTS_LIMIT if (limit is None) else limit
 
     def extract_title(item):
         if isinstance(item, (list, tuple)) and item:
@@ -273,11 +230,16 @@ def format_list(response_json, prefix="Recommended movies are:"):
             return item
         return None
 
+    shown = response_json[:L]
     lines = [prefix]
-    for i, item in enumerate(response_json, 1):
+    for i, item in enumerate(shown, 1):
         t = extract_title(item)
         if t:
             lines.append(f"{i}. {t}")
+
+    remaining = max(0, len(response_json) - len(shown))
+    if remaining > 0:
+        lines.append(f"... and {remaining} more.")
     return "\n".join(lines) if len(lines) > 1 else "No movies found"
 
 def pretty_title_info(response_json, want: str):
@@ -304,11 +266,9 @@ def pretty_title_info(response_json, want: str):
 # Router
 # =========================
 def route(text: str, data: Dict[str, Any]) -> str:
-    # Intent (may be empty/low)
     intent = (data.get("intents") or [{}])[0].get("name")
     conf   = float((data.get("intents") or [{}])[0].get("confidence") or 0.0)
 
-    # Entities (work even if no intent)
     director = ent_any(data, "director")
     actor    = ent_any(data, "actor")
     genre    = ent_any(data, "genre")
@@ -318,18 +278,18 @@ def route(text: str, data: Dict[str, Any]) -> str:
     ytxt     = is_pure_year(text)
     topn     = topn_from_text(text)
 
-    # Hard override: pure-year BEFORE any fallback
+    # Pure year (no other entities) → immediate list
     if ytxt and not any([director, actor, genre, title, attr_val]):
         p = {"year": ytxt, "year_start": ytxt, "year_end": ytxt, "release_year": ytxt}
         res = call_list_movie(p)
         return format_list(res)
 
-    # No/low intent + no entities? default
+    # No/low intent + no entities → default
     have_entities = any([director, actor, genre, title, attr_val, y1, y2, topn, ytxt])
     if (not intent or conf < 0.5) and not have_entities:
         return DEFAULT_FALLBACK
 
-    # No/low intent → decide purely from entities
+    # No/low intent → entity-only routing
     if not intent or conf < 0.5:
         low = text.lower()
         if title and "director" in low: intent = "get_director_by_movie_title"
@@ -357,7 +317,7 @@ def route(text: str, data: Dict[str, Any]) -> str:
                 if y:        p["year"] = p["year_start"] = y
                 res = call_list_movie(p); return format_list(res)
 
-    # Intent handlers (still supported)
+    # Intent handlers
     if intent == "movie_match_director" and director:
         res = call_list_movie({"director": director}); return format_list(res)
     if intent == "movie_match_actor" and actor:
@@ -379,7 +339,10 @@ def route(text: str, data: Dict[str, Any]) -> str:
         if (y1 or ytxt):
             y = y1 or ytxt
             p["year"] = p["year_start"] = y
-        res = call_list_movie(p); return format_list(res)
+        res = call_list_movie(p)
+        # honor requested "top N" if user asked for more than default
+        lim = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
+        return format_list(res, prefix="Top picks:", limit=lim)
     if intent == "movie_match_several_criteria":
         p = {}
         if director: p["director"] = director
