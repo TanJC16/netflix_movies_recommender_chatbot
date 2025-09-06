@@ -1,4 +1,4 @@
-# app.py — Streamlit × Wit.ai × CSV-only
+# app.py — Streamlit × Wit.ai × CSV-only, pretty table results
 
 import os, re, json, urllib.parse, requests, ast
 import pandas as pd
@@ -112,6 +112,12 @@ def _pick_year_col(df: pd.DataFrame):
             return c
     return None
 
+def _rating_col(df: pd.DataFrame):
+    for c in ["rating", "vote_average", "imdb_score"]:
+        if c in df.columns:
+            return c
+    return None
+
 def _load_df():
     df = pd.read_csv(CSV_PATH)
     for c in ["genres", "cast", "director"]:
@@ -119,7 +125,8 @@ def _load_df():
             df[c] = df[c].apply(_to_listish)
     return df
 
-def call_list_movie(params: Dict[str, str]):
+def call_list_movie(params: Dict[str, str]) -> pd.DataFrame:
+    """Return a filtered DataFrame (not just titles)."""
     df = _load_df()
 
     # Year filter (supports year / year_start / year_end / release_year)
@@ -156,13 +163,10 @@ def call_list_movie(params: Dict[str, str]):
         except Exception:
             n = None
         if n and n > 0:
-            rcol = next((c for c in ["rating", "vote_average", "imdb_score"] if c in df.columns), None)
+            rcol = _rating_col(df)
             df = (df.sort_values(rcol, ascending=False) if rcol else df).head(n)
 
-    # Output list of titles
-    if "title" in df.columns:
-        return df["title"].astype(str).tolist()
-    return df.iloc[:, 0].astype(str).tolist()
+    return df
 
 def call_movie_info(title: str):
     df = _load_df()
@@ -179,20 +183,12 @@ def call_movie_info(title: str):
             "directors": _to_listish(row["director"]) if "director" in df.columns else [],
             "actors": _to_listish(row["cast"]) if "cast" in df.columns else [],
             "genres": _to_listish(row["genres"]) if "genres" in df.columns else [],
-            "rating": row["rating"] if "rating" in df.columns and pd.notna(row["rating"]) else None,
+            "rating": row[_rating_col(df)] if _rating_col(df) and pd.notna(row[_rating_col(df)]) else None,
         }
     }
 
-def call_movie_with_attribute(params: Dict[str, str]):
-    df = _load_df()
-    ycol = _pick_year_col(df)
-    y_start = params.get("year") or params.get("year_start") or params.get("release_year")
-    y_end   = params.get("year_end") or y_start
-    if ycol and y_start:
-        yvals = pd.to_numeric(df[ycol], errors="coerce")
-        ys = int(str(y_start)); ye = int(str(y_end)) if y_end else ys
-        df = df[yvals.between(ys, ye)]
-
+def call_movie_with_attribute(params: Dict[str, str]) -> pd.DataFrame:
+    df = call_list_movie(params)  # respect optional year filter first
     attr = str(params.get("movie_attribute") or "").strip()
     if attr and attr in df.columns:
         s = df[attr]
@@ -200,72 +196,69 @@ def call_movie_with_attribute(params: Dict[str, str]):
             df = df[s.fillna("").astype(str).str.strip() != ""]
         else:
             df = df[s.notna()]
-
-    if "title" in df.columns:
-        return df["title"].astype(str).tolist()
-    return df.iloc[:, 0].astype(str).tolist()
+    return df
 
 # =========================
-# Formatters
+# Display helpers
 # =========================
-def format_list(response_json, prefix="Recommended movies are:", limit: Optional[int] = None):
-    if not response_json:
-        return "No movies found"
+def _join(lst, k):
+    try:
+        lst = lst or []
+        return ", ".join([str(x) for x in lst[:k]])
+    except Exception:
+        return ""
 
-    # default limit
-    L = RESULTS_LIMIT if (limit is None) else limit
+def make_display_df(df: pd.DataFrame, limit: int) -> pd.DataFrame:
+    if df is None or df.empty:
+        return pd.DataFrame()
 
-    def extract_title(item):
-        if isinstance(item, (list, tuple)) and item:
-            return str(item[0])
-        if isinstance(item, dict):
-            for k in ["title", "movie_title", "name"]:
-                if k in item and item[k]:
-                    return str(item[k])
-            for k, v in item.items():
-                if "title" in str(k).lower():
-                    return str(v)
-            return None
-        if isinstance(item, str):
-            return item
-        return None
+    ycol = _pick_year_col(df)
+    rcol = _rating_col(df)
 
-    shown = response_json[:L]
-    lines = [prefix]
-    for i, item in enumerate(shown, 1):
-        t = extract_title(item)
-        if t:
-            lines.append(f"{i}. {t}")
+    out = pd.DataFrame()
+    out["Title"] = (df["title"].astype(str)
+                    if "title" in df.columns else df.iloc[:, 0].astype(str))
+    if ycol: out["Year"] = pd.to_numeric(df[ycol], errors="coerce").astype("Int64")
+    if "genres" in df.columns:   out["Genres"]     = df["genres"].apply(lambda L: _join(L, 3))
+    if "director" in df.columns: out["Director(s)"]= df["director"].apply(lambda L: _join(L, 2))
+    if "cast" in df.columns:     out["Cast"]       = df["cast"].apply(lambda L: _join(L, 3))
+    if rcol: out["Rating"] = pd.to_numeric(df[rcol], errors="coerce")
 
-    remaining = max(0, len(response_json) - len(shown))
-    if remaining > 0:
-        lines.append(f"... and {remaining} more.")
-    return "\n".join(lines) if len(lines) > 1 else "No movies found"
+    # keep order pleasant
+    cols = [c for c in ["Title", "Year", "Genres", "Director(s)", "Cast", "Rating"] if c in out.columns]
+    out = out[cols].head(limit)
+    return out
 
-def pretty_title_info(response_json, want: str):
-    if not response_json:
-        return "MovieTitleNotFound"
-    out = []
-    for title, payload in response_json.items():
-        out.append(f"Movie title: {title}")
-        val = payload.get(want)
-        if want == "year_start":
-            out.append(f"Year: {val}" if val else "Year not found")
-        elif want in ("directors", "actors", "genres"):
-            if isinstance(val, list) and val:
-                label = "Director(s)" if want == "directors" else ("Actor(s)" if want == "actors" else "Genre(s)")
-                out.append(f"{label}:")
-                out.extend([f"- {x}" for x in val])
-            else:
-                out.append(f"{'Directors' if want=='directors' else 'Actors' if want=='actors' else 'Genres'} not found")
-        elif want == "rating":
-            out.append(f"Rating: {val}" if val is not None else "Rating not found")
-    return "\n".join(out)
+def summary_line(df: pd.DataFrame, params: Dict[str, str], limit: int) -> str:
+    total = 0 if df is None else len(df)
+    pieces = []
+
+    ys = params.get("year") or params.get("year_start") or params.get("release_year")
+    ye = params.get("year_end") or ys
+    if ys and ye and str(ys) == str(ye):
+        pieces.append(f"from {ys}")
+    elif ys and ye:
+        pieces.append(f"from {ys}–{ye}")
+
+    if params.get("genre"):    pieces.append(f"in genre **{params['genre']}**")
+    if params.get("director"): pieces.append(f"directed by **{params['director']}**")
+    if params.get("actor"):    pieces.append(f"starring **{params['actor']}**")
+
+    if params.get("rating"):
+        pieces.append(f"top **{params['rating']}** by rating")
+
+    spec = "; ".join(pieces)
+    shown = min(limit, total)
+    if not total:
+        return "No movies found."
+    if spec:
+        return f"Found **{total}** movies {spec}. Showing **{shown}**."
+    return f"Found **{total}** movies. Showing **{shown}**."
 
 # =========================
-# Router
+# Router (returns: message, DataFrame|None)
 # =========================
-def route(text: str, data: Dict[str, Any]) -> str:
+def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]:
     intent = (data.get("intents") or [{}])[0].get("name")
     conf   = float((data.get("intents") or [{}])[0].get("confidence") or 0.0)
 
@@ -277,17 +270,19 @@ def route(text: str, data: Dict[str, Any]) -> str:
     y1, y2   = extract_years_any(data, text)
     ytxt     = is_pure_year(text)
     topn     = topn_from_text(text)
+    limit    = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
 
     # Pure year (no other entities) → immediate list
     if ytxt and not any([director, actor, genre, title, attr_val]):
         p = {"year": ytxt, "year_start": ytxt, "year_end": ytxt, "release_year": ytxt}
-        res = call_list_movie(p)
-        return format_list(res)
+        df = call_list_movie(p)
+        msg = summary_line(df, p, limit)
+        return msg, make_display_df(df, limit)
 
     # No/low intent + no entities → default
     have_entities = any([director, actor, genre, title, attr_val, y1, y2, topn, ytxt])
     if (not intent or conf < 0.5) and not have_entities:
-        return DEFAULT_FALLBACK
+        return DEFAULT_FALLBACK, None
 
     # No/low intent → entity-only routing
     if not intent or conf < 0.5:
@@ -301,13 +296,21 @@ def route(text: str, data: Dict[str, Any]) -> str:
             if (y1 or ytxt) and not any([director, actor, genre, title, attr_val]):
                 y = y1 or ytxt
                 p = {"year": y, "year_start": y, "year_end": y, "release_year": y}
-                res = call_list_movie(p); return format_list(res)
+                df = call_list_movie(p)
+                msg = summary_line(df, p, limit)
+                return msg, make_display_df(df, limit)
             if director and not any([actor, genre, y1, title, attr_val]):
-                res = call_list_movie({"director": director}); return format_list(res)
+                p = {"director": director}
+                df = call_list_movie(p); msg = summary_line(df, p, limit)
+                return msg, make_display_df(df, limit)
             if actor and not any([director, genre, y1, title, attr_val]):
-                res = call_list_movie({"actor": actor}); return format_list(res)
+                p = {"actor": actor}
+                df = call_list_movie(p); msg = summary_line(df, p, limit)
+                return msg, make_display_df(df, limit)
             if genre and not any([director, actor, y1, title, attr_val]):
-                res = call_list_movie({"genre": genre}); return format_list(res)
+                p = {"genre": genre}
+                df = call_list_movie(p); msg = summary_line(df, p, limit)
+                return msg, make_display_df(df, limit)
             if any([director, actor, genre, y1, ytxt]):
                 y = y1 or ytxt
                 p = {}
@@ -315,21 +318,25 @@ def route(text: str, data: Dict[str, Any]) -> str:
                 if actor:    p["actor"]    = actor
                 if genre:    p["genre"]    = genre
                 if y:        p["year"] = p["year_start"] = y
-                res = call_list_movie(p); return format_list(res)
+                df = call_list_movie(p); msg = summary_line(df, p, limit)
+                return msg, make_display_df(df, limit)
 
     # Intent handlers
     if intent == "movie_match_director" and director:
-        res = call_list_movie({"director": director}); return format_list(res)
+        p = {"director": director}
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
     if intent == "movie_match_actor" and actor:
-        res = call_list_movie({"actor": actor}); return format_list(res)
+        p = {"actor": actor}
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
     if intent == "movie_match_genre" and genre:
-        res = call_list_movie({"genre": genre}); return format_list(res)
+        p = {"genre": genre}
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
     if intent == "movie_match_year" and (y1 or y2 or ytxt):
         y = y1 or ytxt
         p = {}
         if y:  p["year"] = p["year_start"] = y
         if y2: p["year_end"] = y2
-        res = call_list_movie(p); return format_list(res)
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
     if intent == "movie_match_rating":
         p = {}
         if topn:     p["rating"]   = topn
@@ -339,10 +346,9 @@ def route(text: str, data: Dict[str, Any]) -> str:
         if (y1 or ytxt):
             y = y1 or ytxt
             p["year"] = p["year_start"] = y
-        res = call_list_movie(p)
-        # honor requested "top N" if user asked for more than default
+        df = call_list_movie(p)
         lim = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
-        return format_list(res, prefix="Top picks:", limit=lim)
+        return summary_line(df, p, lim), make_display_df(df, lim)
     if intent == "movie_match_several_criteria":
         p = {}
         if director: p["director"] = director
@@ -351,32 +357,37 @@ def route(text: str, data: Dict[str, Any]) -> str:
         if (y1 or ytxt):
             y = y1 or ytxt
             p["year"] = p["year_start"] = y
-        res = call_list_movie(p); return format_list(res)
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
     if intent == "get_director_by_movie_title" and title:
-        info = call_movie_info(title); return pretty_title_info(info, want="directors")
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="directors"), None
     if intent == "get_actor_by_movie_title" and title:
-        info = call_movie_info(title); return pretty_title_info(info, want="actors")
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="actors"), None
     if intent == "get_year_by_movie_title" and title:
-        info = call_movie_info(title); return pretty_title_info(info, want="year_start")
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="year_start"), None
     if intent == "get_genre_by_movie_title" and title:
-        info = call_movie_info(title); return pretty_title_info(info, want="genres")
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="genres"), None
     if intent == "get_rating_by_movie_title" and title:
-        info = call_movie_info(title); return pretty_title_info(info, want="rating")
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="rating"), None
     if intent == "get_movie_attributes" and attr_val:
         p = {"movie_attribute": attr_val}
         if (y1 or ytxt):
             y = y1 or ytxt
             p["year"] = p["year_start"] = y
-        res = call_movie_with_attribute(p); return format_list(res)
+        df = call_movie_with_attribute(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
     # Last resort
     if (y1 or ytxt):
         y = y1 or ytxt
         p = {"year": y, "year_start": y, "year_end": y2 or y, "release_year": y}
-        res = call_list_movie(p); return format_list(res)
+        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
-    return DEFAULT_FALLBACK
+    return DEFAULT_FALLBACK, None
 
 # =========================
 # Chat Loop
@@ -393,10 +404,26 @@ if prompt:
 
     try:
         data = wit_message(prompt)
-        answer = route(prompt, data)
+        message, table_df = route(prompt, data)
     except Exception as e:
-        answer = f"Error: {e}"
+        message, table_df = (f"Error: {e}", None)
 
-    st.session_state["history"].append({"role": "assistant", "text": answer})
+    st.session_state["history"].append({"role": "assistant", "text": message})
     with st.chat_message("assistant"):
-        st.markdown(answer)
+        st.markdown(message)
+        if isinstance(table_df, pd.DataFrame) and not table_df.empty:
+            rcol = "Rating" if "Rating" in table_df.columns else None
+            ycol = "Year"   if "Year"   in table_df.columns else None
+            st.dataframe(
+                table_df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Title": st.column_config.TextColumn(width="large"),
+                    "Genres": st.column_config.TextColumn(width="medium"),
+                    "Director(s)": st.column_config.TextColumn(width="medium"),
+                    "Cast": st.column_config.TextColumn(width="large"),
+                    **({"Rating": st.column_config.NumberColumn(format="%.1f")} if rcol else {}),
+                    **({"Year": st.column_config.NumberColumn(format="%d")} if ycol else {}),
+                },
+            )
