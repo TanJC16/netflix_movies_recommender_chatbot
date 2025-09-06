@@ -305,6 +305,64 @@ def _render_table(df: pd.DataFrame):
         },
     )
 
+
+# =========================
+# Formatters
+# =========================
+def format_list(response_json, prefix="Recommended movies are:", limit: Optional[int] = None):
+    if not response_json:
+        return "No movies found"
+
+    # default limit
+    L = RESULTS_LIMIT if (limit is None) else limit
+
+    def extract_title(item):
+        if isinstance(item, (list, tuple)) and item:
+            return str(item[0])
+        if isinstance(item, dict):
+            for k in ["title", "movie_title", "name"]:
+                if k in item and item[k]:
+                    return str(item[k])
+            for k, v in item.items():
+                if "title" in str(k).lower():
+                    return str(v)
+            return None
+        if isinstance(item, str):
+            return item
+        return None
+
+    shown = response_json[:L]
+    lines = [prefix]
+    for i, item in enumerate(shown, 1):
+        t = extract_title(item)
+        if t:
+            lines.append(f"{i}. {t}")
+
+    remaining = max(0, len(response_json) - len(shown))
+    if remaining > 0:
+        lines.append(f"... and {remaining} more.")
+    return "\n".join(lines) if len(lines) > 1 else "No movies found"
+
+def pretty_title_info(response_json, want: str):
+    if not response_json:
+        return "MovieTitleNotFound"
+    out = []
+    for title, payload in response_json.items():
+        out.append(f"Movie title: {title}")
+        val = payload.get(want)
+        if want == "year_start":
+            out.append(f"Year: {val}" if val else "Year not found")
+        elif want in ("directors", "actors", "genres"):
+            if isinstance(val, list) and val:
+                label = "Director(s)" if want == "directors" else ("Actor(s)" if want == "actors" else "Genre(s)")
+                out.append(f"{label}:")
+                out.extend([f"- {x}" for x in val])
+            else:
+                out.append(f"{'Directors' if want=='directors' else 'Actors' if want=='actors' else 'Genres'} not found")
+        elif want == "rating":
+            out.append(f"Rating: {val}" if val is not None else "Rating not found")
+    return "\n".join(out)
+
 # =========================
 # Router (returns: message, DataFrame|None)
 # =========================
