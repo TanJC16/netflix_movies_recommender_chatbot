@@ -231,8 +231,12 @@ def make_display_df(df: pd.DataFrame, limit: int) -> pd.DataFrame:
 
 def summary_line(df: pd.DataFrame, params: Dict[str, str], limit: int) -> str:
     total = 0 if df is None else len(df)
-    pieces = []
+    if total == 0:
+        return "No movies found."
 
+    shown = min(limit, total)
+
+    pieces = []
     ys = params.get("year") or params.get("year_start") or params.get("release_year")
     ye = params.get("year_end") or ys
     if ys and ye and str(ys) == str(ye):
@@ -240,20 +244,17 @@ def summary_line(df: pd.DataFrame, params: Dict[str, str], limit: int) -> str:
     elif ys and ye:
         pieces.append(f"from {ys}–{ye}")
 
-    if params.get("genre"):    pieces.append(f"in genre **{params['genre']}**")
-    if params.get("director"): pieces.append(f"directed by **{params['director']}**")
-    if params.get("actor"):    pieces.append(f"starring **{params['actor']}**")
-
+    if params.get("genre"):
+        pieces.append(f"in **{params['genre']}**")
+    if params.get("director"):
+        pieces.append(f"directed by **{params['director']}**")
+    if params.get("actor"):
+        pieces.append(f"starring **{params['actor']}**")
     if params.get("rating"):
-        pieces.append(f"top **{params['rating']}** by rating")
+        pieces.append(f"top **{params['rating']}**")
 
-    spec = "; ".join(pieces)
-    shown = min(limit, total)
-    if not total:
-        return "No movies found."
-    if spec:
-        return f"Found **{total}** movies {spec}. Showing **{shown}**."
-    return f"Found **{total}** movies. Showing **{shown}**."
+    spec = " ".join(pieces).strip()
+    return f"Showing **{shown}** movies {spec}." if spec else f"Showing **{shown}** movies."
 
 # =========================
 # Router (returns: message, DataFrame|None)
