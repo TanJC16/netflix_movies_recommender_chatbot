@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, Tuple
 WIT_SERVER_TOKEN = os.getenv("WIT_SERVER_TOKEN", "PASTE_YOUR_WIT_SERVER_ACCESS_TOKEN_HERE")
 API_VERSION      = os.getenv("WIT_API_VERSION", "20240901")
 
-ENDPOINT_DATABASE_PATH = os.getenv("MOVIE_API_BASE", "http://localhost:9001")
+ENDPOINT_DATABASE_PATH = os.getenv("MOVIE_API_BASE", "http://localhost:8000")
 ENDPOINT_GET_MOVIE = "/list-movie"
 ENDPOINT_GET_MOVIE_INFO = "/movie-info"
 ENDPOINT_GET_MOVIE_WITH_ATTRIBUTES = "/movie-with-attribute"
