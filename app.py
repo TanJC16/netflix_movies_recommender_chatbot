@@ -26,25 +26,23 @@ CSV_PATH         = get_secret("CSV_PATH", "cleaned_movies.csv")
 RESULTS_LIMIT    = _as_int(get_secret("RESULTS_LIMIT", "20"), 20)
 
 DEFAULT_FALLBACK = 'Tell me what you’d like to watch (e.g., "action movies from 2018").'
-ACTORISH = re.compile(r"\b(actor|cast|star|starring|featured|featuring|appears|acted|performer|participant|play(?:ed|ing)?)\b", re.I)
+ACTORISH    = re.compile(r"\b(actor|cast|star|starring|featured|featuring|appears|acted|performer|participant|play(?:ed|ing)?)\b", re.I)
 DIRECTORISH = re.compile(r"\b(direct(?:or|ed|ing)|filmmaker|dir\.?)\b", re.I)
 HEAD = {"Authorization": f"Bearer {WIT_SERVER_TOKEN}"} if WIT_SERVER_TOKEN else {}
 
 # =========================
 # UI
 # =========================
-st.set_page_config(page_title="Wit.ai Movie Bot", page_icon="🎬", layout="wide")
-st.title("🎬 Wit.ai Movie Bot (CSV-only)")
+st.set_page_config(page_title="Netflix Movies Recommender Chatbot (Wit.ai)", page_icon="🎬", layout="wide")
+st.title("🎬 Netflix Movies Recommender Chatbot (Wit.ai)")
 
 if not WIT_SERVER_TOKEN:
-    st.warning("No Wit.ai token found in Streamlit secrets (WIT_SERVER_TOKEN). "
-               "Entity extraction will be limited; year-only still works.")
+    st.warning("No Wit.ai token found in Streamlit secrets (WIT_SERVER_TOKEN). Entity extraction will be limited; year-only still works.")
 
 # =========================
 # Wit helpers
 # =========================
 def wit_message(text: str) -> Dict[str, Any]:
-    """Query Wit.ai; if token missing, return minimal payload so routing via regex still works."""
     if not WIT_SERVER_TOKEN:
         return {"text": text, "intents": [], "entities": {}}
     r = requests.get(
@@ -128,10 +126,8 @@ def _load_df():
     return df
 
 def call_list_movie(params: Dict[str, str]) -> pd.DataFrame:
-    """Return a filtered DataFrame (not just titles)."""
     df = _load_df()
 
-    # Year filter (supports year / year_start / year_end / release_year)
     ycol = _pick_year_col(df)
     y_start = params.get("year") or params.get("year_start") or params.get("release_year")
     y_end   = params.get("year_end") or y_start
@@ -143,22 +139,18 @@ def call_list_movie(params: Dict[str, str]) -> pd.DataFrame:
         except Exception:
             pass
 
-    # Genre filter (exact match to one of the list values)
     if "genre" in params and "genres" in df.columns and params["genre"]:
         g = str(params["genre"]).lower()
         df = df[df["genres"].apply(lambda L: any(g == str(x).lower() for x in L))]
 
-    # Actor filter (substring in any cast value)
     if "actor" in params and "cast" in df.columns and params["actor"]:
         a = str(params["actor"]).lower()
         df = df[df["cast"].apply(lambda L: any(a in str(x).lower() for x in L))]
 
-    # Director filter (substring in any director value)
     if "director" in params and "director" in df.columns and params["director"]:
         d = str(params["director"]).lower()
         df = df[df["director"].apply(lambda L: any(d in str(x).lower() for x in L))]
 
-    # "rating" used as Top-N if present
     if "rating" in params and params["rating"]:
         try:
             n = int(params["rating"])
@@ -190,7 +182,7 @@ def call_movie_info(title: str):
     }
 
 def call_movie_with_attribute(params: Dict[str, str]) -> pd.DataFrame:
-    df = call_list_movie(params)  # respect optional year filter first
+    df = call_list_movie(params)
     attr = str(params.get("movie_attribute") or "").strip()
     if attr and attr in df.columns:
         s = df[attr]
@@ -221,12 +213,11 @@ def make_display_df(df: pd.DataFrame, limit: int) -> pd.DataFrame:
     out["Title"] = (df["title"].astype(str)
                     if "title" in df.columns else df.iloc[:, 0].astype(str))
     if ycol: out["Year"] = pd.to_numeric(df[ycol], errors="coerce").astype("Int64")
-    if "genres" in df.columns:   out["Genres"]     = df["genres"].apply(lambda L: _join(L, 3))
-    if "director" in df.columns: out["Director(s)"]= df["director"].apply(lambda L: _join(L, 2))
-    if "cast" in df.columns:     out["Cast"]       = df["cast"].apply(lambda L: _join(L, 3))
+    if "genres" in df.columns:   out["Genres"]      = df["genres"].apply(lambda L: _join(L, 3))
+    if "director" in df.columns: out["Director(s)"] = df["director"].apply(lambda L: _join(L, 2))
+    if "cast" in df.columns:     out["Cast"]        = df["cast"].apply(lambda L: _join(L, 3))
     if rcol: out["Rating"] = pd.to_numeric(df[rcol], errors="coerce")
 
-    # keep order pleasant
     cols = [c for c in ["Title", "Year", "Genres", "Director(s)", "Cast", "Rating"] if c in out.columns]
     out = out[cols].head(limit)
     return out
@@ -294,19 +285,16 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
     topn     = topn_from_text(text)
     limit    = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
 
-    # Pure year (no other entities) → immediate list
     if ytxt and not any([director, actor, genre, title, attr_val]):
         p = {"year": ytxt, "year_start": ytxt, "year_end": ytxt, "release_year": ytxt}
         df = call_list_movie(p)
         msg = summary_line(df, p, limit)
         return msg, make_display_df(df, limit)
 
-    # No/low intent + no entities → default
     have_entities = any([director, actor, genre, title, attr_val, y1, y2, topn, ytxt])
     if (not intent or conf < 0.5) and not have_entities:
         return DEFAULT_FALLBACK, None
 
-    # No/low intent → entity-only routing
     if not intent or conf < 0.5:
         low = text.lower()
         if title and "director" in low: intent = "get_director_by_movie_title"
@@ -322,49 +310,40 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
                 msg = summary_line(df, p, limit)
                 return msg, make_display_df(df, limit)
             if director and not any([actor, genre, y1, title, attr_val]):
-                # prefer actor if query sounds actor-ish
                 if ACTORISH.search(text):
                     p_act = {"actor": director}
                     df_act = call_list_movie(p_act)
                     if not df_act.empty:
                         msg = summary_line(df_act, p_act, limit)
                         return msg, make_display_df(df_act, limit)
-
-                # otherwise director first, then fallback to actor
                 p_dir = {"director": director}
                 df_dir = call_list_movie(p_dir)
                 if not df_dir.empty:
                     msg = summary_line(df_dir, p_dir, limit)
                     return msg, make_display_df(df_dir, limit)
-
                 p_act = {"actor": director}
                 df_act = call_list_movie(p_act)
                 if not df_act.empty:
                     msg = summary_line(df_act, p_act, limit)
                     return msg, make_display_df(df_act, limit)
-
                 return "No movies found.", None
             if actor and not any([director, genre, y1, title, attr_val]):
-                # prefer director if query sounds director-ish
                 if DIRECTORISH.search(text):
                     p_dir = {"director": actor}
                     df_dir = call_list_movie(p_dir)
                     if not df_dir.empty:
                         msg = summary_line(df_dir, p_dir, limit)
                         return msg, make_display_df(df_dir, limit)
-                # otherwise actor first, then fallback to director
                 p_act = {"actor": actor}
                 df_act = call_list_movie(p_act)
                 if not df_act.empty:
                     msg = summary_line(df_act, p_act, limit)
                     return msg, make_display_df(df_act, limit)
-
                 p_dir = {"director": actor}
                 df_dir = call_list_movie(p_dir)
                 if not df_dir.empty:
                     msg = summary_line(df_dir, p_dir, limit)
                     return msg, make_display_df(df_dir, limit)
-
                 return "No movies found.", None
             if genre and not any([director, actor, y1, title, attr_val]):
                 p = {"genre": genre}
@@ -380,62 +359,51 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
                 df = call_list_movie(p); msg = summary_line(df, p, limit)
                 return msg, make_display_df(df, limit)
 
-    # Intent handlers
     if intent == "movie_match_director" and director:
-        # If the text sounds like they want ACTOR results, prefer actor search
         if ACTORISH.search(text) and not actor:
             p = {"actor": director}
             df = call_list_movie(p)
             if not df.empty:
                 return summary_line(df, p, limit), make_display_df(df, limit)
-
-        # Try director normally
         p_dir = {"director": director}
         df_dir = call_list_movie(p_dir)
         if not df_dir.empty:
             return summary_line(df_dir, p_dir, limit), make_display_df(df_dir, limit)
-
-        # Fallback: maybe they meant the actor with that name
         if not actor:
             p_act = {"actor": director}
             df_act = call_list_movie(p_act)
             if not df_act.empty:
                 return summary_line(df_act, p_act, limit), make_display_df(df_act, limit)
-
-        # Nothing matched either way
         return "No movies found.", None
+
     if intent == "movie_match_actor" and actor:
-        # If the text sounds like they want DIRECTOR results, prefer director search
         if DIRECTORISH.search(text) and not director:
             p_dir = {"director": actor}
             df_dir = call_list_movie(p_dir)
             if not df_dir.empty:
                 return summary_line(df_dir, p_dir, limit), make_display_df(df_dir, limit)
-
-        # Try actor normally
         p_act = {"actor": actor}
         df_act = call_list_movie(p_act)
         if not df_act.empty:
             return summary_line(df_act, p_act, limit), make_display_df(df_act, limit)
-
-        # Fallback: maybe they meant the director with that name
         if not director:
             p_dir = {"director": actor}
             df_dir = call_list_movie(p_dir)
             if not df_dir.empty:
                 return summary_line(df_dir, p_dir, limit), make_display_df(df_dir, limit)
-
-        # Nothing matched either way
         return "No movies found.", None
+
     if intent == "movie_match_genre" and genre:
         p = {"genre": genre}
         df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
+
     if intent == "movie_match_year" and (y1 or y2 or ytxt):
         y = y1 or ytxt
         p = {}
         if y:  p["year"] = p["year_start"] = y
         if y2: p["year_end"] = y2
         df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
+
     if intent == "movie_match_rating":
         p = {}
         if topn:     p["rating"]   = topn
@@ -448,6 +416,7 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
         df = call_list_movie(p)
         lim = max(RESULTS_LIMIT, _as_int(topn, RESULTS_LIMIT)) if topn else RESULTS_LIMIT
         return summary_line(df, p, lim), make_display_df(df, lim)
+
     if intent == "movie_match_several_criteria":
         p = {}
         if director: p["director"] = director
@@ -480,7 +449,6 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
             p["year"] = p["year_start"] = y
         df = call_movie_with_attribute(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
-    # Last resort
     if (y1 or ytxt):
         y = y1 or ytxt
         p = {"year": y, "year_start": y, "year_end": y2 or y, "release_year": y}
@@ -491,35 +459,31 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
 # =========================
 # Chat Loop
 # =========================
-# ---------- Chat (replay history first) ----------
 for m in st.session_state.get("history", []):
     with st.chat_message(m["role"]):
         st.markdown(m["text"])
-        if m.get("table"):  # <- new
+        if m.get("table"):
             df_prev = pd.DataFrame(m["table"], columns=m.get("columns"))
             _render_table(df_prev)
 
 prompt = st.chat_input("Ask me about movies…")
 if prompt:
-    st.session_state.setdefault("history", []).append({"role":"user","text":prompt})
+    st.session_state.setdefault("history", []).append({"role": "user", "text": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
         data = wit_message(prompt)
-        message, table_df = route(prompt, data)  # your route returns (message, df)
+        message, table_df = route(prompt, data)
     except Exception as e:
         message, table_df = (f"Error: {e}", None)
 
-    # show current response
     with st.chat_message("assistant"):
         st.markdown(message)
-        hist_item = {"role":"assistant","text":message}
+        hist_item = {"role": "assistant", "text": message}
         if isinstance(table_df, pd.DataFrame) and not table_df.empty:
             _render_table(table_df)
-            # persist for future reruns
             hist_item["table"] = table_df.to_dict(orient="records")
             hist_item["columns"] = list(table_df.columns)
 
-    # push after we finish rendering
     st.session_state["history"].append(hist_item)
