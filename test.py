@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Evaluate Wit.ai intents/entities on a JSON test set (no Streamlit imports).
+Evaluate Wit.ai intents/entities on a JSON test set.
 
 Outputs (to console):
 - Overall intent accuracy
@@ -11,10 +11,6 @@ Outputs (to console):
 - Latency stats (avg/p50/p95)
 
 Also writes a CSV of failing examples (text, expected vs predicted).
-
-Environment:
-  WIT_SERVER_TOKEN=...      (required)
-  WIT_API_VERSION=20240901  (optional; default 20240901)
 
 Usage:
   python test.py --json test_data.json --out wit_failures.csv
@@ -58,14 +54,10 @@ def _top_intent_name(payload: Dict[str, Any]) -> Optional[str]:
     return intents[0].get("name")
 
 def _entities_as_pairs(payload: Dict[str, Any]) -> Dict[str, str]:
-    """
-    Map 'entity:role' -> str(value). If Wit lacks role, use 'entity:entity'.
-    Only the first value per key is scored (aligns with your test JSON).
-    """
     out = {}
     ents = payload.get("entities") or {}
     for k, arr in ents.items():
-        if not isinstance(arr, list) or not arr:
+        if not isinstance(arr, list) or not arr: 
             continue
         v = arr[0].get("value")
         if isinstance(v, dict):
@@ -73,7 +65,15 @@ def _entities_as_pairs(payload: Dict[str, Any]) -> Dict[str, str]:
         if v is None:
             continue
         key = k if ":" in k else f"{k}:{k}"
-        out[key] = str(v)
+        val = str(v)
+
+        # ---- normalization for rating like "Top 5" -> "5"
+        if key.startswith("rating:"):
+            m = re.search(r"\d+", val)
+            if m:
+                val = m.group(0)
+
+        out[key] = val
     return out
 
 # ---------------- Metrics helpers ----------------

@@ -1,0 +1,9 @@
+[
+  { "name": "actor" },
+  { "name": "director" },
+  { "name": "genre" },
+  { "name": "movie_attribute" },
+  { "name": "movie_title" },
+  { "name": "rating" },
+  { "name": "year" }
+]

@@ -1,0 +1,31 @@
+bucket,text,expected_intent,pred_intent,expected_entities,pred_entities,latency_s
+get_actor_by_movie_title,Who acted in Inception?,get_actor_by_movie_title,,"{""movie_title:movie_title"": ""Inception""}","{""movie_title:movie_title"": ""Inception""}",3.528
+get_actor_by_movie_title,Show the cast for The Dark Knight,get_actor_by_movie_title,,"{""movie_title:movie_title"": ""The Dark Knight""}","{""movie_title:movie_title"": ""The""}",0.792
+get_actor_by_movie_title,Tell me the actors in Forrest Gump,get_actor_by_movie_title,get_director_by_movie_title,"{""movie_title:movie_title"": ""Forrest Gump""}","{""movie_title:movie_title"": ""Forrest Gump""}",0.721
+get_director_by_movie_title,Who directed Inception?,get_director_by_movie_title,,"{""movie_title:movie_title"": ""Inception""}","{""movie_title:movie_title"": ""Inception""}",0.685
+get_director_by_movie_title,Director of The Social Network,get_director_by_movie_title,,"{""movie_title:movie_title"": ""The Social Network""}","{""movie_title:movie_title"": ""The""}",0.679
+get_director_by_movie_title,Show the director for Parasite,get_director_by_movie_title,movie_match_director,"{""movie_title:movie_title"": ""Parasite""}","{""movie_title:movie_title"": ""Parasite""}",0.682
+get_director_by_movie_title,Who made The Godfather?,get_director_by_movie_title,get_year_by_movie_title,"{""movie_title:movie_title"": ""The Godfather""}","{""movie_title:movie_title"": ""The Godfather""}",0.704
+get_genre_by_movie_title,Genres for The Dark Knight,get_genre_by_movie_title,,"{""movie_title:movie_title"": ""The Dark Knight""}","{""movie_title:movie_title"": ""The""}",0.685
+get_genre_by_movie_title,Tell me the genres of Titanic,get_genre_by_movie_title,,"{""movie_title:movie_title"": ""Titanic""}","{""movie_title:movie_title"": ""Titanic""}",0.701
+get_genre_by_movie_title,Which genre is Parasite?,get_genre_by_movie_title,,"{""movie_title:movie_title"": ""Parasite""}","{""movie_title:movie_title"": ""Parasite""}",0.734
+get_genre_by_movie_title,Genre of Interstellar,get_genre_by_movie_title,,"{""movie_title:movie_title"": ""Interstellar""}","{""movie_title:movie_title"": ""Interstellar""}",0.7
+get_rating_by_movie_title,IMDb score for Parasite,get_rating_by_movie_title,movie_match_rating,"{""movie_title:movie_title"": ""Parasite""}","{""movie_title:movie_title"": ""Parasite""}",1.081
+get_rating_by_movie_title,How highly rated is Interstellar?,get_rating_by_movie_title,get_year_by_movie_title,"{""movie_title:movie_title"": ""Interstellar""}","{""movie_title:movie_title"": ""Interstellar""}",0.692
+get_rating_by_movie_title,Give me the rating of Joker,get_rating_by_movie_title,,"{""movie_title:movie_title"": ""Joker""}","{""movie_title:movie_title"": ""Joker""}",0.681
+get_year_by_movie_title,What year is Parasite from?,get_year_by_movie_title,,"{""movie_title:movie_title"": ""Parasite""}","{""movie_title:movie_title"": ""Parasite""}",0.684
+get_year_by_movie_title,Year for The Social Network,get_year_by_movie_title,,"{""movie_title:movie_title"": ""The Social Network""}","{""movie_title:movie_title"": ""The""}",0.736
+movie_match_actor,Find films starring Scarlett Johansson,movie_match_actor,,"{""actor:actor"": ""Scarlett Johansson""}","{""actor:actor"": ""Scarlett Johansson""}",0.72
+movie_match_actor,Show movies featuring Tom Hanks,movie_match_actor,,"{""actor:actor"": ""Tom Hanks""}","{""actor:actor"": ""Tom Hanks""}",0.745
+movie_match_actor,Give me Tika Sumpter films,movie_match_actor,movie_match_director,"{""actor:actor"": ""Tika Sumpter""}","{""actor:actor"": ""Tika Sump""}",0.693
+movie_match_director,Give me Greta Gerwig movies,movie_match_director,,"{""director:director"": ""Greta Gerwig""}","{""actor:actor"": ""Greta""}",0.715
+movie_match_director,Bong Joon-ho directed movies,movie_match_director,movie_match_director,"{""director:director"": ""Bong Joon-ho""}","{""actor:actor"": ""Joon-ho"", ""director:director"": ""Bong""}",0.682
+movie_match_genre,Recommend romance movies,movie_match_genre,,"{""genre:genre"": ""romance""}","{""genre:genre"": ""romance""}",0.695
+movie_match_year,List 2019 movies,movie_match_year,,"{""year:year"": ""2019""}","{""year:year"": ""2019""}",0.721
+movie_match_year,Any 2020 releases,movie_match_year,movie_match_rating,"{""year:year"": ""2020""}","{""year:year"": ""2020""}",0.709
+movie_match_year,Films from 2001,movie_match_year,movie_match_year,"{""year:year"": ""2001""}",{},0.709
+movie_match_rating,Top 7 comedy films from 2010,movie_match_rating,,"{""rating:rating"": ""7"", ""genre:genre"": ""comedy"", ""year:year"": ""2010""}","{""genre:genre"": ""comedy"", ""rating:rating"": ""7"", ""year:year"": ""2010""}",0.701
+movie_match_several_criteria,Christopher Nolan sci-fi films from 2010,movie_match_several_criteria,,"{""director:director"": ""Christopher Nolan"", ""genre:genre"": ""science fiction"", ""year:year"": ""2010""}","{""director:director"": ""Christopher Nolan"", ""genre:genre"": ""science fiction"", ""year:year"": ""2010""}",0.74
+movie_match_several_criteria,Comedy movies with Scarlett Johansson from 2008,movie_match_several_criteria,movie_match_several_criteria,"{""genre:genre"": ""comedy"", ""actor:actor"": ""Scarlett Johansson"", ""year:year"": ""2008""}","{""actor:actor"": ""Scarlett Johansson"", ""genre:genre"": ""comedy""}",0.695
+movie_match_several_criteria,Horror films directed by Bong Joon-ho from 2003,movie_match_several_criteria,movie_match_several_criteria,"{""genre:genre"": ""horror"", ""director:director"": ""Bong Joon-ho"", ""year:year"": ""2003""}","{""actor:actor"": ""Joon-ho"", ""director:director"": ""Bong"", ""genre:genre"": ""horror""}",0.307
+movie_match_several_criteria,Keanu Reeves action films from 1999,movie_match_several_criteria,movie_match_actor,"{""actor:actor"": ""Keanu Reeves"", ""genre:genre"": ""action"", ""year:year"": ""1999""}","{""actor:actor"": ""Keanu Reeves"", ""genre:genre"": ""action""}",0.721

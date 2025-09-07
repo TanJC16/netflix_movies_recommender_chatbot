@@ -217,9 +217,9 @@
   ],
   "movie_match_year": [
     {
-      "text": "Movies from 1994",
+      "text": "Movies from 1995",
       "expected_intent": "movie_match_year",
-      "entities": { "year:year": "1994" }
+      "entities": { "year:year": "1995" }
     },
     {
       "text": "Show films from 2010",

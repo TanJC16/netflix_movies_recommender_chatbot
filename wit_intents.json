@@ -1,0 +1,56 @@
+[
+  {
+    "name": "affirm"
+  },
+  {
+    "name": "bot_challenge"
+  },
+  {
+    "name": "deny"
+  },
+  {
+    "name": "get_actor_by_movie_title"
+  },
+  {
+    "name": "get_director_by_movie_title"
+  },
+  {
+    "name": "get_genre_by_movie_title"
+  },
+  {
+    "name": "get_rating_by_movie_title"
+  },
+  {
+    "name": "get_year_by_movie_title"
+  },
+  {
+    "name": "goodbye"
+  },
+  {
+    "name": "greet"
+  },
+  {
+    "name": "mood_great"
+  },
+  {
+    "name": "mood_unhappy"
+  },
+  {
+    "name": "movie_match_actor"
+  },
+  {
+    "name": "movie_match_director"
+  },
+  {
+    "name": "movie_match_genre"
+  },
+  {
+    "name": "movie_match_rating"
+  },
+  {
+    "name": "movie_match_several_criteria"
+  },
+  {
+    "name": "movie_match_year"
+  }
+]

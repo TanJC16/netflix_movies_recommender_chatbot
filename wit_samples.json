@@ -1,0 +1,1328 @@
+[
+  {
+    "text": "hey",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "hello",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "hi",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "good morning",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "good evening",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "hey there",
+    "intent": "greet",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "bye",
+    "intent": "goodbye",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "goodbye",
+    "intent": "goodbye",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "see you around",
+    "intent": "goodbye",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "see you later",
+    "intent": "goodbye",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "yes",
+    "intent": "affirm",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "indeed",
+    "intent": "affirm",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "of course",
+    "intent": "affirm",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "that sounds good",
+    "intent": "affirm",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "correct",
+    "intent": "affirm",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "no",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "never",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "I don't think so",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "don't like that",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "no way",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "not really",
+    "intent": "deny",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "perfect",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "very good",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "great",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "amazing",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "wonderful",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "I am feeling very good",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "I am great",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "I'm good",
+    "intent": "mood_great",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "sad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "very sad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "unhappy",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "bad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "very bad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "awful",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "terrible",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "not very good",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "extremely sad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "so sad",
+    "intent": "mood_unhappy",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "are you a bot?",
+    "intent": "bot_challenge",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "are you a human?",
+    "intent": "bot_challenge",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "am I talking to a bot?",
+    "intent": "bot_challenge",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "am I talking to a human?",
+    "intent": "bot_challenge",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by quentin tarantino?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 46,
+        "body": "quentin tarantino",
+        "value": "quentin tarantino",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by steven spielberg?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 45,
+        "body": "steven spielberg",
+        "value": "steven spielberg",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by christopher nolan?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 46,
+        "body": "christopher nolan",
+        "value": "christopher nolan",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by charles roven?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 42,
+        "body": "charles roven",
+        "value": "charles roven",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by martin scorsese?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 44,
+        "body": "martin scorsese",
+        "value": "martin scorsese",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies were directed by scott rudin?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 29,
+        "end": 40,
+        "body": "scott rudin",
+        "value": "scott rudin",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what are the movies by stanley kubrick?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 23,
+        "end": 38,
+        "body": "stanley kubrick",
+        "value": "stanley kubrick",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what are the movies by peter jackson?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 23,
+        "end": 36,
+        "body": "peter jackson",
+        "value": "peter jackson",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what are the movies by joel silver?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 23,
+        "end": 34,
+        "body": "joel silver",
+        "value": "joel silver",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is quentin tarantino known for?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 8,
+        "end": 25,
+        "body": "quentin tarantino",
+        "value": "quentin tarantino",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what did ridley scott create?",
+    "intent": "movie_match_director",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 9,
+        "end": 21,
+        "body": "ridley scott",
+        "value": "ridley scott",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of tom cruise?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 47,
+        "body": "tom cruise",
+        "value": "tom cruise",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of brad pitt?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 46,
+        "body": "brad pitt",
+        "value": "brad pitt",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of tom hanks?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 46,
+        "body": "tom hanks",
+        "value": "tom hanks",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of leonardo dicaprio?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 54,
+        "body": "leonardo dicaprio",
+        "value": "leonardo dicaprio",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of morgan freeman?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 51,
+        "body": "morgan freeman",
+        "value": "morgan freeman",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies had the participation of johnny depp?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 37,
+        "end": 48,
+        "body": "johnny depp",
+        "value": "johnny depp",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies has christian bale worked on?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 16,
+        "end": 30,
+        "body": "christian bale",
+        "value": "christian bale",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies has robert de niro worked on?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 16,
+        "end": 30,
+        "body": "robert de niro",
+        "value": "robert de niro",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what movies has matt damon worked on?",
+    "intent": "movie_match_actor",
+    "entities": [
+      {
+        "entity": "actor",
+        "start": 16,
+        "end": 26,
+        "body": "matt damon",
+        "value": "matt damon",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what were the movies made in 2018?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what were the movies made in 1980?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what were the movies made in 1995?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what were the movies made in 1990?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what were the movies made in 2005?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what movies have been released in 2018?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what movies have been released in 1990?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "what movies have been released in 2000?",
+    "intent": "movie_match_year",
+    "entities": [],
+    "traits": []
+  },
+  {
+    "text": "tell me comedy movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "comedy",
+        "value": "comedy",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me action movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "action",
+        "value": "action",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me horror movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "horror",
+        "value": "horror",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "give me comedy movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "comedy",
+        "value": "comedy",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "give me action movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "action",
+        "value": "action",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "give me horror movies",
+    "intent": "movie_match_genre",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "horror",
+        "value": "horror",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me comedy movies that had the participation of tom cruise",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "comedy",
+        "value": "comedy",
+        "role": "genre"
+      },
+      {
+        "entity": "actor",
+        "start": 52,
+        "end": 62,
+        "body": "tom cruise",
+        "value": "tom cruise",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me drama movies that had the participation of brad pitt",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 13,
+        "body": "drama",
+        "value": "drama",
+        "role": "genre"
+      },
+      {
+        "entity": "actor",
+        "start": 51,
+        "end": 60,
+        "body": "brad pitt",
+        "value": "brad pitt",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me comedy movies that were produced between 2018 and 2019",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "comedy",
+        "value": "comedy",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me horror  movies that were produced between 1990 and 2002",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "horror",
+        "value": "horror",
+        "role": "genre"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me action movies that were directed by tony scott",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "genre",
+        "start": 8,
+        "end": 14,
+        "body": "action",
+        "value": "action",
+        "role": "genre"
+      },
+      {
+        "entity": "director",
+        "start": 44,
+        "end": 54,
+        "body": "tony scott",
+        "value": "tony scott",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me movies that were directed by steven spielberg and had tom cruise as an actor",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 37,
+        "end": 53,
+        "body": "steven spielberg",
+        "value": "steven spielberg",
+        "role": "director"
+      },
+      {
+        "entity": "actor",
+        "start": 62,
+        "end": 72,
+        "body": "tom cruise",
+        "value": "tom cruise",
+        "role": "actor"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "tell me movies that were directed by tony scott produced between 1990 and 2002",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {
+        "entity": "director",
+        "start": 37,
+        "end": 47,
+        "body": "tony scott",
+        "value": "tony scott",
+        "role": "director"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what were the top 5 rated movies in 2018?",
+    "intent": "movie_match_rating",
+    "entities": [
+      {
+        "entity": "rating",
+        "start": 14,
+        "end": 19,
+        "body": "top 5",
+        "value": "top 5",
+        "role": "rating"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what were the top 2 rated movies in 2019?",
+    "intent": "movie_match_rating",
+    "entities": [
+      {
+        "entity": "rating",
+        "start": 14,
+        "end": 19,
+        "body": "top 2",
+        "value": "top 2",
+        "role": "rating"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what were the top 10 rated movies in 1990?",
+    "intent": "movie_match_rating",
+    "entities": [
+      {
+        "entity": "rating",
+        "start": 14,
+        "end": 20,
+        "body": "top 10",
+        "value": "top 10",
+        "role": "rating"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who was the director of the godfather?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 24,
+        "end": 37,
+        "body": "the godfather",
+        "value": "the godfather",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who was the director of inception?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 24,
+        "end": 33,
+        "body": "inception",
+        "value": "inception",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who was the director of fight club?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 24,
+        "end": 34,
+        "body": "fight club",
+        "value": "fight club",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who was the director of interstellar?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 24,
+        "end": 36,
+        "body": "interstellar",
+        "value": "interstellar",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who was the director of the matrix?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 24,
+        "end": 34,
+        "body": "the matrix",
+        "value": "the matrix",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who created top gun?",
+    "intent": "get_director_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 12,
+        "end": 19,
+        "body": "top gun",
+        "value": "top gun",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who were the star actors in the godfather?",
+    "intent": "get_actor_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 28,
+        "end": 41,
+        "body": "the godfather",
+        "value": "the godfather",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who were the star actors in star wars?",
+    "intent": "get_actor_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 28,
+        "end": 37,
+        "body": "star wars",
+        "value": "star wars",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who were the star actors in inception?",
+    "intent": "get_actor_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 28,
+        "end": 37,
+        "body": "inception",
+        "value": "inception",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who were the star actors in interstellar?",
+    "intent": "get_actor_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 28,
+        "end": 40,
+        "body": "interstellar",
+        "value": "interstellar",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "who were the star actors in the matrix?",
+    "intent": "get_actor_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 28,
+        "end": 38,
+        "body": "the matrix",
+        "value": "the matrix",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "when was released the godfather?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 18,
+        "end": 31,
+        "body": "the godfather",
+        "value": "the godfather",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "when was released star wars?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 18,
+        "end": 27,
+        "body": "star wars",
+        "value": "star wars",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "when was released fight club?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 18,
+        "end": 28,
+        "body": "fight club",
+        "value": "fight club",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "when was released interstellar?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 18,
+        "end": 30,
+        "body": "interstellar",
+        "value": "interstellar",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "when was released inception?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 18,
+        "end": 27,
+        "body": "inception",
+        "value": "inception",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what year did miss jerry come out?",
+    "intent": "get_year_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 14,
+        "end": 24,
+        "body": "miss jerry",
+        "value": "miss jerry",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the genre of the godfather?",
+    "intent": "get_genre_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 21,
+        "end": 34,
+        "body": "the godfather",
+        "value": "the godfather",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the genre of miss jerry?",
+    "intent": "get_genre_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 21,
+        "end": 31,
+        "body": "miss jerry",
+        "value": "miss jerry",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the genre of fight club?",
+    "intent": "get_genre_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 21,
+        "end": 31,
+        "body": "fight club",
+        "value": "fight club",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the genre of interstellar?",
+    "intent": "get_genre_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 21,
+        "end": 33,
+        "body": "interstellar",
+        "value": "interstellar",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the genre of inception?",
+    "intent": "get_genre_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 21,
+        "end": 30,
+        "body": "inception",
+        "value": "inception",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the rating of the godfather?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 22,
+        "end": 35,
+        "body": "the godfather",
+        "value": "the godfather",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the rating of miss jerry?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 22,
+        "end": 32,
+        "body": "miss jerry",
+        "value": "miss jerry",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the rating of fight club?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 22,
+        "end": 32,
+        "body": "fight club",
+        "value": "fight club",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the rating of interstellar?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 22,
+        "end": 34,
+        "body": "interstellar",
+        "value": "interstellar",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the rating of inception?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 22,
+        "end": 31,
+        "body": "inception",
+        "value": "inception",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "what is the incredibles rated?",
+    "intent": "get_rating_by_movie_title",
+    "entities": [
+      {
+        "entity": "movie_title",
+        "start": 8,
+        "end": 23,
+        "body": "the incredibles",
+        "value": "the incredibles",
+        "role": "movie_title"
+      }
+    ],
+    "traits": []
+  },
+  {
+    "text": "show me comedy movies from 2010 directed by edgar wright",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {"entity":"genre:genre","start":8,"end":14,"body":"comedy","entities":[]},
+      {"entity":"year:year","start":25,"end":29,"body":"2010","entities":[]},
+      {"entity":"director:director","start":43,"end":55,"body":"edgar wright","entities":[]}
+    ]
+  },
+  {
+    "text": "find action films with tom cruise from 1996",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {"entity":"genre:genre","start":5,"end":11,"body":"action","entities":[]},
+      {"entity":"actor:actor","start":23,"end":32,"body":"tom cruise","entities":[]},
+      {"entity":"year:year","start":38,"end":42,"body":"1996","entities":[]}
+    ]
+  },
+  {
+    "text": "top 5 drama movies in 2019 starring brad pitt",
+    "intent": "movie_match_several_criteria",
+    "entities": [
+      {"entity":"wit$number:number","start":4,"end":5,"body":"5","entities":[]},
+      {"entity":"genre:genre","start":6,"end":11,"body":"drama","entities":[]},
+      {"entity":"year:year","start":23,"end":27,"body":"2019","entities":[]},
+      {"entity":"actor:actor","start":37,"end":46,"body":"brad pitt","entities":[]}
+    ]
+  }
+]
