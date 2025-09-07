@@ -1,0 +1,299 @@
+{
+  "get_actor_by_movie_title": [
+    {
+      "text": "Who acted in Inception?",
+      "expected_intent": "get_actor_by_movie_title",
+      "entities": { "movie_title:movie_title": "Inception" }
+    },
+    {
+      "text": "Show the cast for The Dark Knight",
+      "expected_intent": "get_actor_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Dark Knight" }
+    },
+    {
+      "text": "Actors of Parasite",
+      "expected_intent": "get_actor_by_movie_title",
+      "entities": { "movie_title:movie_title": "Parasite" }
+    },
+    {
+      "text": "Which actors starred in Interstellar?",
+      "expected_intent": "get_actor_by_movie_title",
+      "entities": { "movie_title:movie_title": "Interstellar" }
+    },
+    {
+      "text": "Tell me the actors in Forrest Gump",
+      "expected_intent": "get_actor_by_movie_title",
+      "entities": { "movie_title:movie_title": "Forrest Gump" }
+    }
+  ],
+  "get_director_by_movie_title": [
+    {
+      "text": "Who directed Inception?",
+      "expected_intent": "get_director_by_movie_title",
+      "entities": { "movie_title:movie_title": "Inception" }
+    },
+    {
+      "text": "Director of The Social Network",
+      "expected_intent": "get_director_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Social Network" }
+    },
+    {
+      "text": "Show the director for Parasite",
+      "expected_intent": "get_director_by_movie_title",
+      "entities": { "movie_title:movie_title": "Parasite" }
+    },
+    {
+      "text": "Who is the director of La La Land?",
+      "expected_intent": "get_director_by_movie_title",
+      "entities": { "movie_title:movie_title": "La La Land" }
+    },
+    {
+      "text": "Who made The Godfather?",
+      "expected_intent": "get_director_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Godfather" }
+    }
+  ],
+  "get_genre_by_movie_title": [
+    {
+      "text": "What is the genre of Inception?",
+      "expected_intent": "get_genre_by_movie_title",
+      "entities": { "movie_title:movie_title": "Inception" }
+    },
+    {
+      "text": "Genres for The Dark Knight",
+      "expected_intent": "get_genre_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Dark Knight" }
+    },
+    {
+      "text": "Tell me the genres of Titanic",
+      "expected_intent": "get_genre_by_movie_title",
+      "entities": { "movie_title:movie_title": "Titanic" }
+    },
+    {
+      "text": "Which genre is Parasite?",
+      "expected_intent": "get_genre_by_movie_title",
+      "entities": { "movie_title:movie_title": "Parasite" }
+    },
+    {
+      "text": "Genre of Interstellar",
+      "expected_intent": "get_genre_by_movie_title",
+      "entities": { "movie_title:movie_title": "Interstellar" }
+    }
+  ],
+  "get_rating_by_movie_title": [
+    {
+      "text": "What is the rating of Inception?",
+      "expected_intent": "get_rating_by_movie_title",
+      "entities": { "movie_title:movie_title": "Inception" }
+    },
+    {
+      "text": "Show rating for The Godfather",
+      "expected_intent": "get_rating_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Godfather" }
+    },
+    {
+      "text": "IMDb score for Parasite",
+      "expected_intent": "get_rating_by_movie_title",
+      "entities": { "movie_title:movie_title": "Parasite" }
+    },
+    {
+      "text": "How highly rated is Interstellar?",
+      "expected_intent": "get_rating_by_movie_title",
+      "entities": { "movie_title:movie_title": "Interstellar" }
+    },
+    {
+      "text": "Give me the rating of Joker",
+      "expected_intent": "get_rating_by_movie_title",
+      "entities": { "movie_title:movie_title": "Joker" }
+    }
+  ],
+  "get_year_by_movie_title": [
+    {
+      "text": "When was Inception released?",
+      "expected_intent": "get_year_by_movie_title",
+      "entities": { "movie_title:movie_title": "Inception" }
+    },
+    {
+      "text": "Release year of The Matrix",
+      "expected_intent": "get_year_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Matrix" }
+    },
+    {
+      "text": "What year is Parasite from?",
+      "expected_intent": "get_year_by_movie_title",
+      "entities": { "movie_title:movie_title": "Parasite" }
+    },
+    {
+      "text": "Which year did Titanic come out?",
+      "expected_intent": "get_year_by_movie_title",
+      "entities": { "movie_title:movie_title": "Titanic" }
+    },
+    {
+      "text": "Year for The Social Network",
+      "expected_intent": "get_year_by_movie_title",
+      "entities": { "movie_title:movie_title": "The Social Network" }
+    }
+  ],
+  "movie_match_actor": [
+    {
+      "text": "Movies with Keanu Reeves",
+      "expected_intent": "movie_match_actor",
+      "entities": { "actor:actor": "Keanu Reeves" }
+    },
+    {
+      "text": "Find films starring Scarlett Johansson",
+      "expected_intent": "movie_match_actor",
+      "entities": { "actor:actor": "Scarlett Johansson" }
+    },
+    {
+      "text": "Show movies featuring Tom Hanks",
+      "expected_intent": "movie_match_actor",
+      "entities": { "actor:actor": "Tom Hanks" }
+    },
+    {
+      "text": "List Leonardo DiCaprio movies",
+      "expected_intent": "movie_match_actor",
+      "entities": { "actor:actor": "Leonardo DiCaprio" }
+    },
+    {
+      "text": "Give me Tika Sumpter films",
+      "expected_intent": "movie_match_actor",
+      "entities": { "actor:actor": "Tika Sumpter" }
+    }
+  ],
+  "movie_match_director": [
+    {
+      "text": "Movies directed by Christopher Nolan",
+      "expected_intent": "movie_match_director",
+      "entities": { "director:director": "Christopher Nolan" }
+    },
+    {
+      "text": "Show Steven Spielberg films",
+      "expected_intent": "movie_match_director",
+      "entities": { "director:director": "Steven Spielberg" }
+    },
+    {
+      "text": "List Quentin Tarantino movies",
+      "expected_intent": "movie_match_director",
+      "entities": { "director:director": "Quentin Tarantino" }
+    },
+    {
+      "text": "Give me Greta Gerwig movies",
+      "expected_intent": "movie_match_director",
+      "entities": { "director:director": "Greta Gerwig" }
+    },
+    {
+      "text": "Bong Joon-ho directed movies",
+      "expected_intent": "movie_match_director",
+      "entities": { "director:director": "Bong Joon-ho" }
+    }
+  ],
+  "movie_match_genre": [
+    {
+      "text": "Show me action movies",
+      "expected_intent": "movie_match_genre",
+      "entities": { "genre:genre": "action" }
+    },
+    {
+      "text": "List comedy films",
+      "expected_intent": "movie_match_genre",
+      "entities": { "genre:genre": "comedy" }
+    },
+    {
+      "text": "Find horror movies",
+      "expected_intent": "movie_match_genre",
+      "entities": { "genre:genre": "horror" }
+    },
+    {
+      "text": "Recommend romance movies",
+      "expected_intent": "movie_match_genre",
+      "entities": { "genre:genre": "romance" }
+    },
+    {
+      "text": "Any science fiction films",
+      "expected_intent": "movie_match_genre",
+      "entities": { "genre:genre": "science fiction" }
+    }
+  ],
+  "movie_match_year": [
+    {
+      "text": "Movies from 1994",
+      "expected_intent": "movie_match_year",
+      "entities": { "year:year": "1994" }
+    },
+    {
+      "text": "Show films from 2010",
+      "expected_intent": "movie_match_year",
+      "entities": { "year:year": "2010" }
+    },
+    {
+      "text": "List 2019 movies",
+      "expected_intent": "movie_match_year",
+      "entities": { "year:year": "2019" }
+    },
+    {
+      "text": "Any 2020 releases",
+      "expected_intent": "movie_match_year",
+      "entities": { "year:year": "2020" }
+    },
+    {
+      "text": "Films from 2001",
+      "expected_intent": "movie_match_year",
+      "entities": { "year:year": "2001" }
+    }
+  ],
+  "movie_match_rating": [
+    {
+      "text": "Top 5 movies",
+      "expected_intent": "movie_match_rating",
+      "entities": { "rating:rating": "5" }
+    },
+    {
+      "text": "Top 10 action movies",
+      "expected_intent": "movie_match_rating",
+      "entities": { "rating:rating": "10", "genre:genre": "action" }
+    },
+    {
+      "text": "Top 3 movies from 2019",
+      "expected_intent": "movie_match_rating",
+      "entities": { "rating:rating": "3", "year:year": "2019" }
+    },
+    {
+      "text": "Top 8 films directed by Christopher Nolan",
+      "expected_intent": "movie_match_rating",
+      "entities": { "rating:rating": "8", "director:director": "Christopher Nolan" }
+    },
+    {
+      "text": "Top 7 comedy films from 2010",
+      "expected_intent": "movie_match_rating",
+      "entities": { "rating:rating": "7", "genre:genre": "comedy", "year:year": "2010" }
+    }
+  ],
+  "movie_match_several_criteria": [
+    {
+      "text": "Action movies from 2019 with Tom Hanks",
+      "expected_intent": "movie_match_several_criteria",
+      "entities": { "genre:genre": "action", "year:year": "2019", "actor:actor": "Tom Hanks" }
+    },
+    {
+      "text": "Christopher Nolan sci-fi films from 2010",
+      "expected_intent": "movie_match_several_criteria",
+      "entities": { "director:director": "Christopher Nolan", "genre:genre": "science fiction", "year:year": "2010" }
+    },
+    {
+      "text": "Comedy movies with Scarlett Johansson from 2008",
+      "expected_intent": "movie_match_several_criteria",
+      "entities": { "genre:genre": "comedy", "actor:actor": "Scarlett Johansson", "year:year": "2008" }
+    },
+    {
+      "text": "Horror films directed by Bong Joon-ho from 2003",
+      "expected_intent": "movie_match_several_criteria",
+      "entities": { "genre:genre": "horror", "director:director": "Bong Joon-ho", "year:year": "2003" }
+    },
+    {
+      "text": "Keanu Reeves action films from 1999",
+      "expected_intent": "movie_match_several_criteria",
+      "entities": { "actor:actor": "Keanu Reeves", "genre:genre": "action", "year:year": "1999" }
+    }
+  ]
+}
