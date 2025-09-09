@@ -1,8 +1,3 @@
-Wit Access Token: "RDNAC35TZ5OV4VLUR43ACFW4CYPW65UP"
-Wit login credential:
-    Email: netflixmoviechatbot@gmail.com
-    Password: netflixchatbottarumt12345
-
 
 ## Steps to login wit:
 
