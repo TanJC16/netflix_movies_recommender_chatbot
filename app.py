@@ -442,67 +442,35 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
 
     if not intent or conf < 0.5:
         low = text.lower()
-        if title and "director" in low: intent = "get_director_by_movie_title"
-        elif title and ("actor" in low or "cast" in low): intent = "get_actor_by_movie_title"
-        elif title and "year" in low: intent = "get_year_by_movie_title"
-        elif title and "genre" in low: intent = "get_genre_by_movie_title"
-        elif title and "rating" in low: intent = "get_rating_by_movie_title"
+        if title and "director" in low:
+            intent = "get_director_by_movie_title"
+        elif title and ("actor" in low or "cast" in low):
+            intent = "get_actor_by_movie_title"
+        elif title and "year" in low:
+            intent = "get_year_by_movie_title"
+        elif title and "genre" in low:
+            intent = "get_genre_by_movie_title"
+        elif title and "rating" in low:
+            intent = "get_rating_by_movie_title"
         else:
-            if (y1 or ytxt) and not any([director, actor, genre, title, attr_val]):
+            p = {}
+            if genre:    p["genre"] = genre
+            if director: p["director"] = director
+            if actor:    p["actor"] = actor
+            if (y1 or ytxt):
                 y = y1 or ytxt
-                p = {"year": y, "year_start": y, "year_end": y, "release_year": y}
+                p["year"] = p["year_start"] = y
+                if y2:
+                    p["year_end"] = y2
+                p["release_year"] = y
+            if attr_val: p["movie_attribute"] = attr_val
+
+            if p:
                 df = call_list_movie(p)
                 msg = summary_line(df, p, limit)
                 return msg, make_display_df(df, limit)
-            if director and not any([actor, genre, y1, title, attr_val]):
-                if ACTORISH.search(text):
-                    p_act = {"actor": director}
-                    df_act = call_list_movie(p_act)
-                    if not df_act.empty:
-                        msg = summary_line(df_act, p_act, limit)
-                        return msg, make_display_df(df_act, limit)
-                p_dir = {"director": director}
-                df_dir = call_list_movie(p_dir)
-                if not df_dir.empty:
-                    msg = summary_line(df_dir, p_dir, limit)
-                    return msg, make_display_df(df_dir, limit)
-                p_act = {"actor": director}
-                df_act = call_list_movie(p_act)
-                if not df_act.empty:
-                    msg = summary_line(df_act, p_act, limit)
-                    return msg, make_display_df(df_act, limit)
-                return "No movies found.", None
-            if actor and not any([director, genre, y1, title, attr_val]):
-                if DIRECTORISH.search(text):
-                    p_dir = {"director": actor}
-                    df_dir = call_list_movie(p_dir)
-                    if not df_dir.empty:
-                        msg = summary_line(df_dir, p_dir, limit)
-                        return msg, make_display_df(df_dir, limit)
-                p_act = {"actor": actor}
-                df_act = call_list_movie(p_act)
-                if not df_act.empty:
-                    msg = summary_line(df_act, p_act, limit)
-                    return msg, make_display_df(df_act, limit)
-                p_dir = {"director": actor}
-                df_dir = call_list_movie(p_dir)
-                if not df_dir.empty:
-                    msg = summary_line(df_dir, p_dir, limit)
-                    return msg, make_display_df(df_dir, limit)
-                return "No movies found.", None
-            if genre and not any([director, actor, y1, title, attr_val]):
-                p = {"genre": genre}
-                df = call_list_movie(p); msg = summary_line(df, p, limit)
-                return msg, make_display_df(df, limit)
-            if any([director, actor, genre, y1, ytxt]):
-                y = y1 or ytxt
-                p = {}
-                if director: p["director"] = director
-                if actor:    p["actor"]    = actor
-                if genre:    p["genre"]    = genre
-                if y:        p["year"] = p["year_start"] = y
-                df = call_list_movie(p); msg = summary_line(df, p, limit)
-                return msg, make_display_df(df, limit)
+
+            return "No movies found.", None
 
     if intent == "movie_match_director" and director:
         if ACTORISH.search(text) and not actor:
