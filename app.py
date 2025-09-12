@@ -549,6 +549,10 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
         if y2: p["year_end"] = y2
         df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
+    if intent == "movie_match_rating" and title:
+        info = call_movie_info(title)
+        return pretty_title_info(info, want="rating"), None
+
     if intent == "movie_match_rating":
         p = {}
         if topn:     p["rating"]   = topn

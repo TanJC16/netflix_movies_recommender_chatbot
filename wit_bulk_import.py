@@ -2,7 +2,7 @@
 # wit_bulk_import.py
 import os, json, time, requests, sys
 
-# --- Put your Wit.ai Server Access Token here ---
+# --- Wit.ai Server Access Token ---
 WIT_TOKEN = "RDNAC35TZ5OV4VLUR43ACFW4CYPW65UP"
 # ------------------------------------------------
 
@@ -177,8 +177,8 @@ def upload_samples(path="wit_samples.json", batch=100):
         time.sleep(0.4)  # be polite
 
 if __name__ == "__main__":
-    # create_intents("wit_intents.json")
-    # create_entities("wit_entities.json")
+    create_intents("wit_intents.json")
+    create_entities("wit_entities.json")
     upload_samples("wit_samples.json", batch=100)
-    # upload_samples("wit_utterances_general.json", batch=100)
+    
     print("Done.")
