@@ -438,6 +438,17 @@ def pretty_title_info(response_json, want: str):
 def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]:
     intent = (data.get("intents") or [{}])[0].get("name")
     conf   = float((data.get("intents") or [{}])[0].get("confidence") or 0.0)
+    smalltalk = {
+        "greet": "Hi! Ask me for movies by genre, year, actor, or director.",
+        "goodbye": "Bye! Happy watching 🎬",
+        "affirm": "Got it 👍",
+        "deny": "No problem. What would you like instead?",
+        "bot_challenge": "Yep—I'm a bot using Wit.ai and a CSV movie catalog.",
+        "mood_great": "Love to hear it! Want some feel-good recommendations?",
+        "mood_unhappy": "Sorry you're feeling down. Maybe a comfort movie can help—what genre?"
+    }
+    if intent in smalltalk:
+        return smalltalk[intent], None
 
     director = stitch_name_from_entities(data, "director", text) or ent_any(data, "director")
     actor    = stitch_name_from_entities(data, "actor", text)    or ent_any(data, "actor")
