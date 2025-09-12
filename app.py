@@ -598,10 +598,19 @@ def route(text: str, data: Dict[str, Any]) -> Tuple[str, Optional[pd.DataFrame]]
             p["year"] = p["year_start"] = y
         df = call_movie_with_attribute(p); return summary_line(df, p, limit), make_display_df(df, limit)
 
-    if (y1 or ytxt):
-        y = y1 or ytxt
-        p = {"year": y, "year_start": y, "year_end": y2 or y, "release_year": y}
-        df = call_list_movie(p); return summary_line(df, p, limit), make_display_df(df, limit)
+    if (y1 or ytxt) or genre or director or actor:
+        p = {}
+        if genre:    p["genre"] = genre
+        if director: p["director"] = director
+        if actor:    p["actor"] = actor
+        if (y1 or ytxt):
+            y = y1 or ytxt
+            p["year"] = p["year_start"] = y
+            if y2:
+                p["year_end"] = y2
+            p["release_year"] = y
+        df = call_list_movie(p)
+        return summary_line(df, p, limit), make_display_df(df, limit)
 
     return DEFAULT_FALLBACK, None
 
