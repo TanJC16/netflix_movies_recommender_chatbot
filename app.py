@@ -126,7 +126,6 @@ def _load_df():
             df[c] = df[c].apply(_to_listish)
     return df
 
-# NEW: always-combine helper
 def build_params_all(*, genre=None, director=None, actor=None, y1=None, y2=None, ytxt=None, topn=None, attr_val=None):
     """Combine all extracted entities into a single params dict for call_list_movie/call_movie_with_attribute."""
     p = {}
@@ -142,7 +141,6 @@ def build_params_all(*, genre=None, director=None, actor=None, y1=None, y2=None,
             p["year_end"] = str(y2)
         p["release_year"] = y
 
-    # "rating" here = Top-N by rating
     if topn:
         p["rating"] = str(topn)
 
