@@ -4,6 +4,7 @@ import os, re, json, urllib.parse, requests, ast
 import pandas as pd
 import streamlit as st
 from typing import Dict, Any, Optional, Tuple
+from difflib import get_close_matches
 
 # =========================
 # Config / Secrets
@@ -162,25 +163,22 @@ def call_list_movie(params: Dict[str, str]) -> pd.DataFrame:
 
     return df
 
-from difflib import get_close_matches
-
 def call_movie_info(title: str):
     df = _load_df()
     if "title" not in df.columns:
         return {}
 
-    # normalize
     tnorm = str(title).lower().strip()
     df_titles = df["title"].astype(str).str.strip()
 
-    # 1) exact lower match
+    # 1) exact match
     hit = df[df_titles.str.lower() == tnorm]
 
-    # 2) contains match (substring search)
+    # 2) substring match
     if hit.empty:
         hit = df[df_titles.str.lower().str.contains(tnorm)]
 
-    # 3) fuzzy match fallback
+    # 3) fuzzy match
     if hit.empty:
         best = get_close_matches(tnorm, df_titles.str.lower().tolist(), n=1, cutoff=0.6)
         if best:
@@ -189,17 +187,17 @@ def call_movie_info(title: str):
     if hit.empty:
         return {}
 
-    row = hit.iloc[0]
     ycol = _pick_year_col(df)
-    return {
-        str(row["title"]): {
+    results = {}
+    for _, row in hit.iterrows():
+        results[str(row["title"])] = {
             "year_start": int(row[ycol]) if ycol and pd.notna(row[ycol]) else None,
             "directors": _to_listish(row["director"]) if "director" in df.columns else [],
             "actors": _to_listish(row["cast"]) if "cast" in df.columns else [],
             "genres": _to_listish(row["genres"]) if "genres" in df.columns else [],
             "rating": row[_rating_col(df)] if _rating_col(df) and pd.notna(row[_rating_col(df)]) else None,
         }
-    }
+    return results
 
 def call_movie_with_attribute(params: Dict[str, str]) -> pd.DataFrame:
     df = call_list_movie(params)
@@ -365,23 +363,51 @@ def format_list(response_json, prefix="Recommended movies are:", limit: Optional
 
 def pretty_title_info(response_json, want: str):
     if not response_json:
-        return "MovieTitleNotFound"
+        return "Hmm… I couldn’t find that movie."
+
     out = []
     for title, payload in response_json.items():
-        out.append(f"Movie title: {title}")
-        val = payload.get(want)
+        year = payload.get("year_start")
+        directors = payload.get("directors") or []
+        actors = payload.get("actors") or []
+        genres = payload.get("genres") or []
+        rating = payload.get("rating")
+
         if want == "year_start":
-            out.append(f"Year: {val}" if val else "Year not found")
-        elif want in ("directors", "actors", "genres"):
-            if isinstance(val, list) and val:
-                label = "Director(s)" if want == "directors" else ("Actor(s)" if want == "actors" else "Genre(s)")
-                out.append(f"{label}:")
-                out.extend([f"- {x}" for x in val])
+            out.append(f"🎬 **{title}** was released in {year}." if year else f"🎬 **{title}** – release year not available.")
+        elif want == "directors":
+            if directors:
+                out.append(f"🎬 **{title}** was directed by {', '.join(directors)}.")
             else:
-                out.append(f"{'Directors' if want=='directors' else 'Actors' if want=='actors' else 'Genres'} not found")
+                out.append(f"🎬 **{title}** – I couldn’t find the director’s name.")
+        elif want == "actors":
+            if actors:
+                out.append(f"🎬 **{title}** starred {', '.join(actors[:5])}.")
+            else:
+                out.append(f"🎬 **{title}** – I couldn’t find the cast list.")
+        elif want == "genres":
+            if genres:
+                out.append(f"🎬 **{title}** falls under the genres: {', '.join(genres)}.")
+            else:
+                out.append(f"🎬 **{title}** – no genre info found.")
         elif want == "rating":
-            out.append(f"Rating: {val}" if val is not None else "Rating not found")
-    return "\n".join(out)
+            if rating is not None:
+                out.append(f"🎬 **{title}** has a rating of {rating}.")
+            else:
+                out.append(f"🎬 **{title}** – no rating available.")
+        else:
+            # Generic info fallback
+            parts = []
+            if year: parts.append(f"released in {year}")
+            if directors: parts.append(f"directed by {', '.join(directors)}")
+            if actors: parts.append(f"starring {', '.join(actors[:3])}")
+            if genres: parts.append(f"in the {', '.join(genres)} genre")
+            if rating is not None: parts.append(f"with a rating of {rating}")
+            if parts:
+                out.append(f"🎬 **{title}** was {', '.join(parts)}.")
+            else:
+                out.append(f"🎬 **{title}** – not much info available.")
+    return "\n\n".join(out)
 
 # =========================
 # Router (returns: message, DataFrame|None)
