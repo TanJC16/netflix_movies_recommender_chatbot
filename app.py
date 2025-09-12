@@ -162,13 +162,33 @@ def call_list_movie(params: Dict[str, str]) -> pd.DataFrame:
 
     return df
 
+from difflib import get_close_matches
+
 def call_movie_info(title: str):
     df = _load_df()
     if "title" not in df.columns:
         return {}
-    hit = df[df["title"].str.lower() == str(title).lower()]
+
+    # normalize
+    tnorm = str(title).lower().strip()
+    df_titles = df["title"].astype(str).str.strip()
+
+    # 1) exact lower match
+    hit = df[df_titles.str.lower() == tnorm]
+
+    # 2) contains match (substring search)
+    if hit.empty:
+        hit = df[df_titles.str.lower().str.contains(tnorm)]
+
+    # 3) fuzzy match fallback
+    if hit.empty:
+        best = get_close_matches(tnorm, df_titles.str.lower().tolist(), n=1, cutoff=0.6)
+        if best:
+            hit = df[df_titles.str.lower() == best[0]]
+
     if hit.empty:
         return {}
+
     row = hit.iloc[0]
     ycol = _pick_year_col(df)
     return {
